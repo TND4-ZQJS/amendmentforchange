@@ -6,140 +6,670 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <!-- pdf-lib for filling & flattening -->
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<!-- pdfjs-dist for rendering original PDF to canvas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<!-- pdfjs-dist for preview -->
+<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <style>
-body{font-family:sans-serif;margin:0;padding:0;background:#f4f4f9}
-.container{max-width:900px;margin:20px auto;background:#fff;padding:20px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
-h1{text-align:center;font-size:20px}
-.section{margin-bottom:20px}
-label{display:block;margin-top:10px;font-weight:bold}
-input,select,textarea{width:100%;padding:8px;margin-top:5px;border:1px solid #ccc;border-radius:4px}
-button{margin-top:15px;padding:10px 15px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer}
-button:hover{background:#0056b3}
-.preview{margin-top:20px;text-align:center}
-canvas{border:1px solid #ccc;max-width:100%}
-.add-btn{background:#28a745}
-.add-btn:hover{background:#1e7e34}
+  :root{
+    --bg:#f6f7f9; --card:#fff; --accent:#007aff; --muted:#666; --line:#e9e9ee;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;margin:18px;background:var(--bg);color:#111}
+  main{max-width:980px;margin:0 auto;background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.06)}
+  h1{margin:15px 0 35px 0;font-size:1.50rem}
+  .section{background:#fbfbfd;border:1px solid #eee;padding:14px;border-radius:10px;margin:12px 0}
+  .section h2{margin:0 0 10px 0;font-size:1.05rem}
+  label{display:block;margin:8px 0;font-size:0.95rem}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin-top:6px;font-size:1rem;background:#fff
+  }
+  textarea{resize:vertical;min-height:120px}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0}
+  .muted{color:var(--muted);font-size:0.85rem}
+  button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+  button.secondary{background:#999}
+  button.ghost{background:transparent;border:1px solid var(--line);color:#333}
+  .actions{display:flex;gap:12px;align-items:center}
 
-/* --- Signature related CSS (disabled) ---
-.sig-preview{border:1px dashed #999;padding:10px;text-align:center;cursor:pointer;margin-top:10px}
-.sig-preview img{max-width:100%;max-height:100px}
-.sig-preview span{color:#666}
-.sig-modal{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center}
-.sig-modal .box{background:#fff;padding:20px;border-radius:4px;text-align:center}
-#sigCanvas{border:1px solid #ccc}
-.sig-actions{margin-top:10px}
-.sig-actions button{margin:0 5px}
---- End Signature related CSS --- */
+
+
+  /* Policy grid (for "additional policies" dynamic demo to mirror reference behavior) */
+  .policy-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .policy{background:#fff;padding:12px;border-radius:10px;border:1px solid #eee;position:relative}
+  .policy h3{margin:0 0 8px 0;font-size:0.95rem;display:flex;align-items:center;justify-content:space-between}
+  .policy .remove-btn{background:transparent;border:1px solid var(--line);color:#333;border-radius:8px;padding:6px 10px;font-size:0.9rem}
+  .policy .remove-btn:hover{border-color:#d0d0d7}
+
+  /* Signature preview tiles */
+  .sig-preview{
+    width:100%; height:150px; border:1px dashed #bbb; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; background:#fff; cursor:pointer; position:relative;
+  }
+  .sig-preview img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .sig-preview span{ color:#999; }
+
+  /* Signature Modal */
+  .sig-modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; }
+  .sig-modal .box{
+    width:min(560px, 92vw); background:#fff; margin:6vh auto; padding:14px; border-radius:12px;
+    box-shadow:0 18px 50px rgba(0,0,0,.25)
+  }
+  .sig-modal h3{ margin:0 0 8px 0; }
+  /* NOTE: canvas is responsive via CSS; internal pixels are set in JS for crispness */
+  #sigCanvas{ width:100%; height:220px; background:#fff; border:1px solid #ddd; border-radius:10px; touch-action:none }
+  .sig-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:10px; }
+
+  /* Hidden signature XY tuning inputs (owner/witness) */
+  .hidden-inputs {display: none;}
+
+  /* Preview pane */
+  .preview{background:#fff;border:1px solid #eee;border-radius:10px;padding:10px}
+  .preview canvas{width:100%;height:auto;border-radius:8px}
+
+  /* Save indicator */
+  #saveStatus{
+    position:fixed; bottom:12px; right:12px; background:var(--accent); color:#fff;
+    padding:6px 10px; border-radius:8px; font-size:0.85rem; opacity:0; transition:opacity .25s;
+  }
+
+  @media (max-width:720px){
+    .policy-grid{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
-<div class="container">
+<main>
   <h1>Amendment to Application (LF1042)</h1>
-  <form id="mainForm">
-    <div class="section">
-      <h3>Policy Owner Details</h3>
-      <label>Policy Owner’s Name</label>
-      <input type="text" id="OwnerName" />
-      <label>NRIC/Passport No</label>
-      <input type="text" id="OwnerID" />
+
+  <!-- SECTION: Proposed Life Insured Info -->
+  <section class="section">
+    <h2>Proposed Life Insured Info</h2>
+
+    <label>Proposed Life Insured/Insured Name
+      <input id="LifeProposed_Name" class="persist" type="text" placeholder="AS IN I/C">
+    </label>
+
+    <div class="row">
+      <label style="flex:1">Policy No. (single)
+        <input id="PolicyNo" class="persist" type="text" placeholder="Enter policy number">
+      </label>
+      <label style="flex:1">IC Number
+        <input id="LifeProposed_NRIC" class="persist" type="text" placeholder="e.g. 900101-14-1234">
+      </label>
     </div>
-    <div class="section">
-      <h3>Amendment Request</h3>
-      <label>Details of Amendment</label>
-      <textarea id="AmendDetails"></textarea>
+  </section>
+
+  <!-- SECTION: Details of Amendment -->
+  <section class="section">
+    <h2>Details of Amendment</h2>
+    <label>Write details here
+      <textarea id="Amendment_WriteDetails" class="persist" rows="15" placeholder="Describe the amendment in detail..."></textarea>
+    </label>
+  </section>
+
+  <!-- SECTION: Signature Details (Date/Place) -->
+  <section class="section">
+    <h2>Signature Details</h2>
+    <div class="row">
+      <label style="flex:1">Signed at (State)
+        <select id="Signed_State" class="persist">
+          <option value="">-- Select State --</option>
+          <!-- Same label set used in your reference -->
+          <option>Johor</option><option>Kedah</option><option>Kelantan</option><option>Melaka</option>
+          <option>Negeri Sembilan</option><option>Pahang</option><option>Penang</option><option>Perak</option>
+          <option>Perlis</option><option>Sabah</option><option>Sarawak</option><option>Selangor</option>
+          <option>Terengganu</option><option>W.P. Kuala Lumpur</option><option>W.P. Labuan</option><option>W.P. Putrajaya</option>
+        </select>
+      </label>
     </div>
-    <!-- --- Signature section disabled ---
-    <div class="section">
-      <h3>Owner Signature</h3>
-      <div id="OwnerSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
+    <div class="row">
+      <label style="flex:1">Day
+        <select id="Signed_Day" class="persist">
+          <option value="">-- Day (DD) --</option>
+        </select>
+      </label>
+      <label style="flex:1">Month
+        <select id="Signed_Month" class="persist">
+          <option value="">-- Month --</option>
+        </select>
+      </label>
+      <label style="flex:1">Year
+        <select id="Signed_Year" class="persist">
+          <option value="">-- Year (YYYY) --</option>
+        </select>
+      </label>
     </div>
-    <div class="section">
-      <h3>Witness Signature</h3>
-      <div id="WitnessSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
+  </section>
+
+  <!-- SECTION: Owner/Policyowner Signature -->
+  <section class="section">
+    <h2>Signature of Proposed Life Insured / Policyowner</h2>
+    <div class="row">
+      <label style="flex:1">Proposed Life Insured/Policyowner Name
+        <input id="Sign_LifeProposedPO_Name" class="persist" type="text" placeholder="AS IN I/C">
+      </label>
     </div>
-    --- End Signature section disabled --- -->
-    <div class="section">
-      <h3>Submit</h3>
-      <button type="button" id="genPdf">Generate PDF</button>
-      <button type="button" id="resetForm">Reset</button>
+    <div class="row">
+    <label style="flex:1">IC No.
+        <input id="Sign_LifeProposedPO_NRIC" class="persist" type="text" placeholder="e.g. 900101-14-1234">
+    </label>
+    <label style="flex:1">Mobile No.
+        <input id="Sign_LifeProposedPO_Mobile" class="persist" type="text" placeholder="e.g. 012-3456789">
+    </label>
+</div>
+
     </div>
-  </form>
-  <div class="preview">
-    <canvas id="pdfCanvas"></canvas>
+
+    <div class="row">
+      <div style="flex:1">
+        <div id="OwnerSigPreview" class="sig-preview" data-target="owner">
+          <span>Tap to Sign (Owner)</span>
+        </div>
+        <div class="row" style="justify-content:flex-end;margin-top:6px">
+          <button class="ghost" id="OwnerSigClear" type="button">Clear Signature</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTIONAL: tuning inputs (documented coordinates) -->
+    <div class="hidden-inputs">
+      <label>Owner Sig X <input id="OwnerSigX" type="number" step="1"></label>
+      <label>Owner Sig Y <input id="OwnerSigY" type="number" step="1"></label>
+      <label>Owner Sig Scale (%) <input id="OwnerSigScale" type="number" step="1"></label>
+    </div>
+  </section>
+
+  <!-- SECTION: Witness Signature -->
+  <section class="section">
+    <h2>Signature of Witness</h2>
+    <div class="row">
+      <label style="flex:1">Name of Witness
+        <input id="Sign_Witness_Name" class="persist" type="text" placeholder="AS IN I/C">
+      </label>
+      <label style="flex:1">IC No.
+        <input id="Sign_Witness_NRIC" class="persist" type="text" placeholder="e.g. 800202-08-5678">
+      </label>
+    </div>
+
+    <div class="row">
+      <div style="flex:1">
+        <div id="WitnessSigPreview" class="sig-preview" data-target="witness">
+          <span>Tap to Sign (Witness)</span>
+        </div>
+        <div class="row" style="justify-content:flex-end;margin-top:6px">
+          <button class="ghost" id="WitnessSigClear" type="button">Clear Signature</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTIONAL: tuning inputs -->
+    <div class="hidden-inputs">
+      <label>Witness Sig X <input id="WitnessSigX" type="number" step="1"></label>
+      <label>Witness Sig Y <input id="WitnessSigY" type="number" step="1"></label>
+      <label>Witness Sig Scale (%) <input id="WitnessSigScale" type="number" step="1"></label>
+    </div>
+  </section>
+
+  <!-- SECTION: (Optional) Additional Policy Entries — preserves the reference's dynamic add/remove behavior -->
+  <section class="hidden-inputs" id="sectionA">
+    <h2>Additional Policy Entries (Optional)</h2>
+    <div id="policiesContainer" class="policy-grid"></div>
+    <div class="row">
+      <button id="addPolicy" type="button">+ Add Another Policy</button>
+      <small class="muted">Up to 4 policies (demo feature to mirror reference behavior)</small>
+    </div>
+  </section>
+
+  <!-- SECTION: Actions + Preview -->
+  <section class="section">
+    <h2>Preview & Output</h2>
+    <div class="row actions">
+      <button id="genPdf" type="button">Generate PDF</button>
+      <button id="resetAll" class="secondary" type="button">Reset All</button>
+      <small class="muted">Make sure <strong>Amendment to Application_LF1042_fillable.pdf</strong> is in the same folder.</small>
+    </div>
+    <div class="hidden-inputs" style="margin-top:10px">
+      <canvas id="pdfPreviewCanvas"></canvas>
+    </div>
+  </section>
+</main>
+
+<!-- Signature Modal -->
+<div id="sigModal" class="sig-modal" role="dialog" aria-modal="true" aria-labelledby="sigTitle">
+  <div class="box">
+    <h3 id="sigTitle">Draw Signature</h3>
+    <canvas id="sigCanvas"></canvas>
+    <div class="sig-actions">
+      <button id="sigDone" type="button">Done</button>
+      <button id="sigClear" class="ghost" type="button">Clear</button>
+      <button id="sigCancel" class="secondary" type="button">Cancel</button>
+    </div>
   </div>
 </div>
 
-<!-- --- Signature modal disabled ---
-<div id="sigModal" class="sig-modal">
-  <div class="box">
-    <p>Please sign below</p>
-    <canvas id="sigCanvas" width="300" height="150"></canvas>
-    <div class="sig-actions">
-      <button id="sigClear">Clear</button>
-      <button id="sigSave">Save</button>
-      <button id="sigCancel">Cancel</button>
-    </div>
-  </div>
-</div>
---- End Signature modal disabled --- -->
+<div id="saveStatus">Saved</div>
 
 <script>
-const $=id=>document.getElementById(id);
+/* ============================================================
+   RUNTIME CONSTANTS — Signature placement on the output PDF
+   Adjust these only when fine-tuning exact placement.
+   Units: PDF points. Scale is a percentage of image width.
+   ============================================================ */
+const OWNER_SIG = { X: 370, Y: 145, SCALE_PCT: 11 };   // <-- EDIT X/Y/SCALE for Owner signature
+const WITNESS_SIG = { X: 70, Y: 145, SCALE_PCT: 11 }; // <-- EDIT X/Y/SCALE for Witness signature
+// If you prefer to tweak via the hidden inputs, toggle `useHiddenSigInputs` to true.
+const useHiddenSigInputs = false;
 
-// const OWNER_SIG={X:370,Y:145,SCALE_PCT:11};
-// const WITNESS_SIG={X:70,Y:145,SCALE_PCT:11};
-// const SIG_OWNER_KEY='LF1042_SIG_OWNER';
-// const SIG_WITNESS_KEY='LF1042_SIG_WITNESS';
+/* =============================
+   Shared helpers (mirrors ref)
+   ============================= */
+const $ = (q, root=document) => root.querySelector(q);
+const $$ = (q, root=document) => Array.from(root.querySelectorAll(q));
+const showSaved = (() => {
+  let t;
+  return () => {
+    const el = $('#saveStatus');
+    el.style.opacity = '1';
+    clearTimeout(t);
+    t = setTimeout(()=> el.style.opacity = '0', 900);
+  };
+})();
 
-function saveForm(){localStorage.setItem('LF1042_FORM',JSON.stringify({
-  OwnerName:$('#OwnerName').value,
-  OwnerID:$('#OwnerID').value,
-  AmendDetails:$('#AmendDetails').value
-}))}
-function loadForm(){const d=localStorage.getItem('LF1042_FORM');if(d){const o=JSON.parse(d);$('#OwnerName').value=o.OwnerName||'';$('#OwnerID').value=o.OwnerID||'';$('#AmendDetails').value=o.AmendDetails||''}
-/* const owner=localStorage.getItem(SIG_OWNER_KEY);if(owner)setSigPreview('owner',owner,false);
-const witness=localStorage.getItem(SIG_WITNESS_KEY);if(witness)setSigPreview('witness',witness,false); */ }
+const FORM_KEY = 'LF1042_AMENDMENT_FORM_V1';
+const SIG_OWNER_KEY = 'LF1042_SIG_OWNER';
+const SIG_WITNESS_KEY = 'LF1042_SIG_WITNESS';
+const POLICIES_KEY = 'LF1042_POLICIES';
 
-['OwnerName','OwnerID','AmendDetails'].forEach(id=>{ $(id).addEventListener('input',saveForm); });
+/* =============================
+   Populate day / month / year
+   ============================= */
+(function initDateSelectors(){
+  const daySel = $('#Signed_Day');
+  const monthSel = $('#Signed_Month');
+  const yearSel = $('#Signed_Year');
 
-// --- Signature logic disabled ---
-/*
-let currentSigTarget=null;
-function setSigPreview(target,dataUrl,store=true){const el=target==='owner'?$('#OwnerSigPreview'):$('#WitnessSigPreview');el.innerHTML='<img src="'+dataUrl+'" />';if(store){localStorage.setItem(target==='owner'?SIG_OWNER_KEY:SIG_WITNESS_KEY,dataUrl)}}
-function openSigModal(target){currentSigTarget=target;$('#sigModal').style.display='flex';clearSigCanvas();}
-function closeSigModal(){$('#sigModal').style.display='none'}
-const sigCanvas=$('#sigCanvas');const sigCtx=sigCanvas.getContext('2d');let drawing=false;
-sigCanvas.addEventListener('mousedown',e=>{drawing=true;sigCtx.moveTo(e.offsetX,e.offsetY)});
-sigCanvas.addEventListener('mousemove',e=>{if(drawing){sigCtx.lineTo(e.offsetX,e.offsetY);sigCtx.stroke()}});
-sigCanvas.addEventListener('mouseup',()=>{drawing=false});
-function clearSigCanvas(){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height)}
-$('#sigClear').onclick=clearSigCanvas;
-$('#sigSave').onclick=function(){const dataUrl=sigCanvas.toDataURL();setSigPreview(currentSigTarget,dataUrl);closeSigModal();}
-$('#sigCancel').onclick=closeSigModal;
-$('#OwnerSigPreview').onclick=()=>openSigModal('owner');
-$('#WitnessSigPreview').onclick=()=>openSigModal('witness');
-*/
-// --- End Signature logic disabled ---
+  for(let d=1; d<=31; d++){
+    const opt=document.createElement('option'); opt.value=String(d).padStart(2,'0'); opt.textContent=String(d).padStart(2,'0');
+    daySel.appendChild(opt);
+  }
+  const months = [
+    'January','February','March','April','May','June','July','August','September','October','November','December'
+  ];
+  months.forEach((m,i)=>{
+    const opt=document.createElement('option'); opt.value=m; opt.textContent=m; monthSel.appendChild(opt);
+  });
+  const now = new Date();
+  const yrStart = now.getFullYear()-1, yrEnd = now.getFullYear()+6;
+  for(let y=yrStart; y<=yrEnd; y++){
+    const opt=document.createElement('option'); opt.value=String(y); opt.textContent=String(y);
+    yearSel.appendChild(opt);
+  }
+})();
 
-async function generatePdf(){
-  const url="LF1042_blank.pdf";const pdfBytes=await fetch(url).then(r=>r.arrayBuffer());const pdfDoc=await PDFLib.PDFDocument.load(pdfBytes);const page=pdfDoc.getPages()[0];const font=await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);const draw=(txt,x,y)=>{page.drawText(txt,{x,y,size:10,font})};
-  draw($('#OwnerName').value,120,635);
-  draw($('#OwnerID').value,120,615);
-  draw($('#AmendDetails').value,120,590);
-  /* --- Signature embedding disabled ---
-  const ownerSigDataUrl=localStorage.getItem(SIG_OWNER_KEY);if(ownerSigDataUrl){const sigBytes=await fetch(ownerSigDataUrl).then(r=>r.arrayBuffer());const sigImg=await pdfDoc.embedPng(sigBytes);page.drawImage(sigImg,{x:OWNER_SIG.X,y:OWNER_SIG.Y,width:sigImg.width*OWNER_SIG.SCALE_PCT/100,height:sigImg.height*OWNER_SIG.SCALE_PCT/100});}
-  const witnessSigDataUrl=localStorage.getItem(SIG_WITNESS_KEY);if(witnessSigDataUrl){const sigBytes=await fetch(witnessSigDataUrl).then(r=>r.arrayBuffer());const sigImg=await pdfDoc.embedPng(sigBytes);page.drawImage(sigImg,{x:WITNESS_SIG.X,y:WITNESS_SIG.Y,width:sigImg.width*WITNESS_SIG.SCALE_PCT/100,height:sigImg.height*WITNESS_SIG.SCALE_PCT/100});}
-  --- End Signature embedding disabled --- */
-  const pdfBytesOut=await pdfDoc.save();const blob=new Blob([pdfBytesOut],{type:'application/pdf'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='LF1042_filled.pdf';link.click();renderPdfOnCanvas(pdfBytesOut);
+/* ==========================================
+   Autosave (1:1 behavior from your reference)
+   ========================================== */
+function loadForm(){
+  const data = JSON.parse(localStorage.getItem(FORM_KEY) || '{}');
+  $$('.persist').forEach(inp=>{
+    if(data[inp.id] !== undefined) inp.value = data[inp.id];
+  });
+  // signatures
+  const owner = localStorage.getItem(SIG_OWNER_KEY);
+  if(owner) setSigPreview('owner', owner, false);
+  const witness = localStorage.getItem(SIG_WITNESS_KEY);
+  if(witness) setSigPreview('witness', witness, false);
+
+  // dynamic policies
+  const policies = JSON.parse(localStorage.getItem(POLICIES_KEY) || '[]');
+  if(policies.length === 0){ addPolicyCard(); }
+  else { policies.forEach(addPolicyCard); }
 }
-async function renderPdfOnCanvas(pdfBytes){const pdf=await pdfjsLib.getDocument({data:pdfBytes}).promise;const page=await pdf.getPage(1);const viewport=page.getViewport({scale:1});const canvas=$('#pdfCanvas');canvas.height=viewport.height;canvas.width=viewport.width;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise}
-function resetAll(){localStorage.removeItem('LF1042_FORM');
-/* localStorage.removeItem(SIG_OWNER_KEY);localStorage.removeItem(SIG_WITNESS_KEY);$('#OwnerSigPreview').innerHTML='<span>Tap to Sign (Owner)</span>';$('#WitnessSigPreview').innerHTML='<span>Tap to Sign (Witness)</span>'; */
-document.getElementById("mainForm").reset();$('#pdfCanvas').getContext('2d').clearRect(0,0,$('#pdfCanvas').width,$('#pdfCanvas').height);}
-$('#genPdf').onclick=generatePdf;$('#resetForm').onclick=resetAll;
-loadForm();
+function saveForm(){
+  const data = {};
+  $$('.persist').forEach(inp=> data[inp.id] = inp.value);
+  localStorage.setItem(FORM_KEY, JSON.stringify(data));
+  showSaved();
+}
+$$('.persist').forEach(el=>{
+  el.addEventListener('input', saveForm);
+  el.addEventListener('change', saveForm);
+});
+
+/* ================================================
+   Dynamic additional policy cards (mirror behavior)
+   ================================================ */
+const MAX_POLICIES = 4;
+$('#addPolicy').addEventListener('click', ()=> addPolicyCard());
+function addPolicyCard(prefill){
+  const wrap = document.createElement('div');
+  wrap.className = 'policy';
+  const idx = Date.now() + '_' + Math.random().toString(36).slice(2,7);
+
+  wrap.innerHTML = `
+    <h3>Policy <button class="remove-btn" type="button">Remove</button></h3>
+    <label>Policy No.
+      <input type="text" class="policy-no" placeholder="Policy number">
+    </label>
+    <label>Note / Context
+      <input type="text" class="policy-note" placeholder="(Optional) short note for this policy">
+    </label>
+  `;
+  $('#policiesContainer').appendChild(wrap);
+
+  const btn = $('.remove-btn', wrap);
+  btn.addEventListener('click', ()=>{
+    wrap.remove();
+    persistPolicies();
+  });
+
+  const inputs = $$('.policy-no, .policy-note', wrap);
+  inputs.forEach(inp => inp.addEventListener('input', persistPolicies));
+
+  // Prefill if provided
+  if(prefill){
+    inputs[0].value = prefill.no || '';
+    inputs[1].value = prefill.note || '';
+  }
+  persistPolicies();
+  enforcePolicyCap();
+}
+function enforcePolicyCap(){
+  const count = $$('.policy').length;
+  $('#addPolicy').disabled = count >= MAX_POLICIES;
+}
+function persistPolicies(){
+  const arr = $$('.policy').map(card=>{
+    return {
+      no: $('.policy-no', card).value || '',
+      note: $('.policy-note', card).value || ''
+    };
+  });
+  localStorage.setItem(POLICIES_KEY, JSON.stringify(arr));
+  enforcePolicyCap();
+}
+
+/* =======================
+   Signature pad + modal
+   ======================= */
+let sigTarget = null; // 'owner' | 'witness'
+const sigModal = $('#sigModal');
+const sigCanvas = $('#sigCanvas');
+const ctx = sigCanvas.getContext('2d', { willReadFrequently: true });
+
+// DPR-aware canvas sizing for crisp strokes
+function resizeSigCanvas(){
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  sigCanvas.width = Math.floor(sigCanvas.getBoundingClientRect().width * ratio);
+  sigCanvas.height = Math.floor(sigCanvas.getBoundingClientRect().height * ratio);
+  ctx.scale(ratio, ratio);
+  clearSigCanvas();
+}
+function clearSigCanvas(){
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,sigCanvas.width, sigCanvas.height);
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#111';
+}
+
+let drawing=false, last={x:0,y:0};
+function pointerPos(e){
+  const rect = sigCanvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  return {x,y};
+}
+function startDraw(e){ drawing=true; last=pointerPos(e); e.preventDefault(); }
+function moveDraw(e){
+  if(!drawing) return;
+  const p = pointerPos(e);
+  ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+  last = p;
+  e.preventDefault();
+}
+function endDraw(){ drawing=false; }
+
+['mousedown','touchstart'].forEach(ev=> sigCanvas.addEventListener(ev, startDraw));
+['mousemove','touchmove'].forEach(ev=> sigCanvas.addEventListener(ev, moveDraw, {passive:false}));
+['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=> sigCanvas.addEventListener(ev, endDraw));
+
+window.addEventListener('resize', resizeSigCanvas);
+
+function openSig(target){
+  sigTarget = target; // 'owner' or 'witness'
+  $('#sigTitle').textContent = `Draw Signature — ${target === 'owner' ? 'Owner/Policyowner' : 'Witness'}`;
+  sigModal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  resizeSigCanvas();
+}
+function closeSig(){
+  sigModal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function setSigPreview(target, dataUrl, persist=true){
+  const box = target === 'owner' ? $('#OwnerSigPreview') : $('#WitnessSigPreview');
+  box.innerHTML = '';
+  const img = new Image();
+  img.src = dataUrl;
+  box.appendChild(img);
+  if(persist){
+    localStorage.setItem(target === 'owner' ? SIG_OWNER_KEY : SIG_WITNESS_KEY, dataUrl);
+    showSaved();
+  }
+}
+
+$('#OwnerSigPreview').addEventListener('click', ()=> openSig('owner'));
+$('#WitnessSigPreview').addEventListener('click', ()=> openSig('witness'));
+$('#OwnerSigClear').addEventListener('click', ()=>{
+  localStorage.removeItem(SIG_OWNER_KEY);
+  $('#OwnerSigPreview').innerHTML = '<span>Tap to Sign (Owner)</span>';
+  showSaved();
+});
+$('#WitnessSigClear').addEventListener('click', ()=>{
+  localStorage.removeItem(SIG_WITNESS_KEY);
+  $('#WitnessSigPreview').innerHTML = '<span>Tap to Sign (Witness)</span>';
+  showSaved();
+});
+
+$('#sigDone').addEventListener('click', ()=>{
+  const dataUrl = sigCanvas.toDataURL('image/png');
+  if(sigTarget) setSigPreview(sigTarget, dataUrl, true);
+  closeSig();
+});
+$('#sigClear').addEventListener('click', ()=> clearSigCanvas());
+$('#sigCancel').addEventListener('click', ()=> closeSig());
+
+/* ==============
+   PDF PREVIEW
+   ============== */
+const pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+async function renderPreview(bytes){
+  const canvas = $('#pdfPreviewCanvas');
+  const ctx2d = canvas.getContext('2d');
+  const pdf = await pdfjsLib.getDocument({data: bytes}).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({ scale: 1.2 });
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const renderContext = { canvasContext: ctx2d, viewport };
+  await page.render(renderContext).promise;
+}
+
+/* =========================
+   PDF FILL / MAP / FLATTEN
+   ========================= */
+async function generatePdf(){
+  // Load base PDF
+  const pdfUrl = 'Amendment to Application_LF1042_fillable.pdf';
+  let existingPdfBytes;
+  try{
+    const res = await fetch(pdfUrl);
+    if(!res.ok) throw new Error('PDF not found next to this HTML file.');
+    existingPdfBytes = await res.arrayBuffer();
+  }catch(err){
+    alert('Cannot load base PDF: ' + err.message);
+    return;
+  }
+
+  // Prepare pdf-lib
+  const { PDFDocument, rgb } = PDFLib;
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const form = pdfDoc.getForm();
+
+  // Map simple fields (HTML id -> PDF field name 1:1)
+  const mapVal = (id) => ($('#'+id)?.value ?? '');
+  const setText = (pdfFieldName, id) => {
+    const field = form.getTextField(pdfFieldName);
+    field.setText(mapVal(id));
+  };
+  const setSelectText = (pdfFieldName, id) => {
+    const val = mapVal(id);
+    const field = form.getTextField(pdfFieldName);
+    field.setText(val);
+  };
+
+  // Required mappings
+  setText('LifeProposed_Name', 'LifeProposed_Name');
+  setText('PolicyNo', 'PolicyNo');
+  setText('LifeProposed_NRIC', 'LifeProposed_NRIC');
+  const amendmentField = form.getTextField('Amendment_WriteDetails');
+  amendmentField.enableMultiline(); // <--- Add this line
+  amendmentField.setText(mapVal('Amendment_WriteDetails'));
+
+  setSelectText('Signed_State', 'Signed_State');
+  setSelectText('Signed_Day', 'Signed_Day');
+  setSelectText('Signed_Month', 'Signed_Month');
+  setSelectText('Signed_Year', 'Signed_Year');
+
+  setText('Sign_LifeProposedPO_Name', 'Sign_LifeProposedPO_Name');
+  setText('Sign_LifeProposedPO_NRIC', 'Sign_LifeProposedPO_NRIC');
+  setText('Sign_LifeProposedPO_Mobile', 'Sign_LifeProposedPO_Mobile');
+  setText('Sign_Witness_Name', 'Sign_Witness_Name');
+  setText('Sign_Witness_NRIC', 'Sign_Witness_NRIC');
+
+  // Flatten all form fields first
+  form.flatten();
+
+  // Embed signatures (Owner & Witness)
+  const page = pdfDoc.getPages()[0];
+
+  // Get signature images from localStorage
+  const ownerSigDataUrl = localStorage.getItem(SIG_OWNER_KEY);
+  const witnessSigDataUrl = localStorage.getItem(SIG_WITNESS_KEY);
+
+  // OPTIONAL: use hidden inputs to override XY/SCALE
+  const ownerXY = {
+    X: useHiddenSigInputs && $('#OwnerSigX').value ? parseFloat($('#OwnerSigX').value) : OWNER_SIG.X,
+    Y: useHiddenSigInputs && $('#OwnerSigY').value ? parseFloat($('#OwnerSigY').value) : OWNER_SIG.Y,
+    SCALE_PCT: useHiddenSigInputs && $('#OwnerSigScale').value ? parseFloat($('#OwnerSigScale').value) : OWNER_SIG.SCALE_PCT
+  };
+  const witnessXY = {
+    X: useHiddenSigInputs && $('#WitnessSigX').value ? parseFloat($('#WitnessSigX').value) : WITNESS_SIG.X,
+    Y: useHiddenSigInputs && $('#WitnessSigY').value ? parseFloat($('#WitnessSigY').value) : WITNESS_SIG.Y,
+    SCALE_PCT: useHiddenSigInputs && $('#WitnessSigScale').value ? parseFloat($('#WitnessSigScale').value) : WITNESS_SIG.SCALE_PCT
+  };
+
+  if(ownerSigDataUrl){
+    const ownerPng = await (await fetch(ownerSigDataUrl)).arrayBuffer();
+    const ownerImg = await pdfDoc.embedPng(ownerPng);
+    const dims = ownerImg.scale(ownerXY.SCALE_PCT/100);
+    page.drawImage(ownerImg, { x: ownerXY.X, y: ownerXY.Y, width: dims.width, height: dims.height });
+  }
+  if(witnessSigDataUrl){
+    const witPng = await (await fetch(witnessSigDataUrl)).arrayBuffer();
+    const witImg = await pdfDoc.embedPng(witPng);
+    const dims = witImg.scale(witnessXY.SCALE_PCT/100);
+    page.drawImage(witImg, { x: witnessXY.X, y: witnessXY.Y, width: dims.width, height: dims.height });
+  }
+
+  // Save + preview
+  const pdfBytes = await pdfDoc.save();
+  renderPreview(pdfBytes);
+
+  // Download
+  const blob = new Blob([pdfBytes], { type:'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Amendment to Application — Web Filler (LF1042).pdf';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 1500);
+}
+
+$('#genPdf').addEventListener('click', generatePdf);
+
+/* =========
+   RESET ALL
+   ========= */
+$('#resetAll').addEventListener('click', ()=>{
+  if(!confirm('Clear all inputs, signatures, and additional policy entries?')) return;
+
+  // Clear form autosave
+  localStorage.removeItem(FORM_KEY);
+  // Clear signatures
+  localStorage.removeItem(SIG_OWNER_KEY);
+  localStorage.removeItem(SIG_WITNESS_KEY);
+  // Clear policies
+  localStorage.removeItem(POLICIES_KEY);
+
+  // Reset fields
+  $$('.persist').forEach(el=>{
+    if(el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  // Reset sig previews
+  $('#OwnerSigPreview').innerHTML = '<span>Tap to Sign (Owner)</span>';
+  $('#WitnessSigPreview').innerHTML = '<span>Tap to Sign (Witness)</span>';
+
+  // Reset policies UI
+  $('#policiesContainer').innerHTML = '';
+  addPolicyCard();
+
+  // Clear preview
+  const ctx2d = $('#pdfPreviewCanvas').getContext('2d');
+  ctx2d.clearRect(0,0, $('#pdfPreviewCanvas').width, $('#pdfPreviewCanvas').height);
+
+  showSaved();
+});
+
+  // Amendment details characters per line limit
+const maxCharsPerLine = 95; // Set your desired character limit per line
+
+const textArea = document.getElementById('Amendment_WriteDetails');
+
+textArea.addEventListener('input', () => {
+  const lines = textArea.value.split('\n');
+  const lastLine = lines[lines.length - 1];
+
+  // If the last line exceeds the character limit
+  if (lastLine.length > maxCharsPerLine) {
+    const newLines = [...lines];
+    const lastLineIndex = newLines.length - 1;
+
+    // Get the part of the line that's too long
+    const overflow = lastLine.substring(maxCharsPerLine);
+    
+    // Trim the last line to the limit
+    newLines[lastLineIndex] = lastLine.substring(0, maxCharsPerLine);
+    
+    // Add the overflow as a new line
+    newLines.push(overflow);
+
+    // Update the textarea with the new lines
+    textArea.value = newLines.join('\n');
+  }
+});
+
+  
+/* ============
+   INIT
+   ============ */
+window.addEventListener('DOMContentLoaded', loadForm);
 </script>
 </body>
 </html>
