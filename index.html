@@ -4,193 +4,142 @@
 <meta charset="utf-8" />
 <title>Amendment to Application — Web Filler (LF1042)</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-
 <!-- pdf-lib for filling & flattening -->
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<!-- pdfjs-dist for rendering PDFs -->
-<script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-
+<!-- pdfjs-dist for rendering original PDF to canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
-:root {
-  --bg:#f6f7f9; --card:#fff; --accent:#007aff; --muted:#666; --line:#e9e9ee;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111;padding:20px;line-height:1.4}
-h1{font-size:20px;font-weight:600;margin-bottom:20px;text-align:center}
-.section{background:var(--card);padding:16px;margin-bottom:16px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.section h3{font-size:16px;margin-bottom:12px;color:var(--accent)}
-label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
-input[type=text],input[type=date],input[type=number]{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;font-size:14px}
-button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:500;cursor:pointer;width:100%;margin-top:10px}
-button.secondary{background:#e9e9ee;color:#111}
-.actions{display:flex;gap:10px}
-.actions button{flex:1}
+body{font-family:sans-serif;margin:0;padding:0;background:#f4f4f9}
+.container{max-width:900px;margin:20px auto;background:#fff;padding:20px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
+h1{text-align:center;font-size:20px}
+.section{margin-bottom:20px}
+label{display:block;margin-top:10px;font-weight:bold}
+input,select,textarea{width:100%;padding:8px;margin-top:5px;border:1px solid #ccc;border-radius:4px}
+button{margin-top:15px;padding:10px 15px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer}
+button:hover{background:#0056b3}
+.preview{margin-top:20px;text-align:center}
+canvas{border:1px solid #ccc;max-width:100%}
+.add-btn{background:#28a745}
+.add-btn:hover{background:#1e7e34}
 
-/* --- Signature-related CSS (disabled) ---
-.sig-preview{border:1px dashed var(--line);border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;cursor:pointer;background:#fafafa}
-.sig-preview img{max-height:100%;max-width:100%}
-.sig-preview span{color:var(--muted);font-size:13px}
-.sig-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000}
-.sig-modal .box{background:#fff;padding:16px;border-radius:12px;width:90%;max-width:400px}
-#sigCanvas{border:1px solid var(--line);border-radius:8px;width:100%;height:200px}
-.sig-actions{display:flex;gap:10px;margin-top:10px}
--------------------------------------------*/
+/* --- Signature related CSS (disabled) ---
+.sig-preview{border:1px dashed #999;padding:10px;text-align:center;cursor:pointer;margin-top:10px}
+.sig-preview img{max-width:100%;max-height:100px}
+.sig-preview span{color:#666}
+.sig-modal{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center}
+.sig-modal .box{background:#fff;padding:20px;border-radius:4px;text-align:center}
+#sigCanvas{border:1px solid #ccc}
+.sig-actions{margin-top:10px}
+.sig-actions button{margin:0 5px}
+--- End Signature related CSS --- */
 </style>
 </head>
 <body>
-<h1>Amendment to Application — Web Filler</h1>
-
-<div class="section">
-  <h3>Policy Information</h3>
-  <label>Policy No.</label>
-  <input type="text" id="PolicyNo" placeholder="Enter policy number" />
-  <label>Policy Owner’s Name</label>
-  <input type="text" id="OwnerName" placeholder="Enter owner name" />
-  <label>Date</label>
-  <input type="date" id="Date" />
-</div>
-
-<!-- Signature Sections disabled
-<div class="section">
-  <h3>Owner Signature</h3>
-  <div id="OwnerSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
-</div>
-<div class="section">
-  <h3>Witness Signature</h3>
-  <div id="WitnessSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
-</div>
--->
-
-<div class="section">
-  <h3>Actions</h3>
-  <div class="actions">
-    <button onclick="generatePdf()">Generate PDF</button>
-    <button class="secondary" onclick="resetAll()">Reset All</button>
+<div class="container">
+  <h1>Amendment to Application (LF1042)</h1>
+  <form id="mainForm">
+    <div class="section">
+      <h3>Policy Owner Details</h3>
+      <label>Policy Owner’s Name</label>
+      <input type="text" id="OwnerName" />
+      <label>NRIC/Passport No</label>
+      <input type="text" id="OwnerID" />
+    </div>
+    <div class="section">
+      <h3>Amendment Request</h3>
+      <label>Details of Amendment</label>
+      <textarea id="AmendDetails"></textarea>
+    </div>
+    <!-- --- Signature section disabled ---
+    <div class="section">
+      <h3>Owner Signature</h3>
+      <div id="OwnerSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
+    </div>
+    <div class="section">
+      <h3>Witness Signature</h3>
+      <div id="WitnessSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
+    </div>
+    --- End Signature section disabled --- -->
+    <div class="section">
+      <h3>Submit</h3>
+      <button type="button" id="genPdf">Generate PDF</button>
+      <button type="button" id="resetForm">Reset</button>
+    </div>
+  </form>
+  <div class="preview">
+    <canvas id="pdfCanvas"></canvas>
   </div>
 </div>
 
-<!-- Signature Modal disabled
+<!-- --- Signature modal disabled ---
 <div id="sigModal" class="sig-modal">
   <div class="box">
-    <canvas id="sigCanvas"></canvas>
+    <p>Please sign below</p>
+    <canvas id="sigCanvas" width="300" height="150"></canvas>
     <div class="sig-actions">
-      <button class="secondary" id="clearSig">Clear</button>
-      <button id="saveSig">Save</button>
+      <button id="sigClear">Clear</button>
+      <button id="sigSave">Save</button>
+      <button id="sigCancel">Cancel</button>
     </div>
   </div>
 </div>
--->
+--- End Signature modal disabled --- -->
 
 <script>
-const $ = s=>document.querySelector(s);
+const $=id=>document.getElementById(id);
 
-// PDF field coords
-const FIELDS = {
-  PolicyNo: { x: 70, y: 740 },
-  OwnerName: { x: 70, y: 710 },
-  Date: { x: 400, y: 710 }
-};
+// const OWNER_SIG={X:370,Y:145,SCALE_PCT:11};
+// const WITNESS_SIG={X:70,Y:145,SCALE_PCT:11};
+// const SIG_OWNER_KEY='LF1042_SIG_OWNER';
+// const SIG_WITNESS_KEY='LF1042_SIG_WITNESS';
 
-/* --- Signature constants (disabled)
-const OWNER_SIG = { X: 370, Y: 145, SCALE_PCT: 11 };
-const WITNESS_SIG = { X: 70, Y: 145, SCALE_PCT: 11 };
-const useHiddenSigInputs = false;
+function saveForm(){localStorage.setItem('LF1042_FORM',JSON.stringify({
+  OwnerName:$('#OwnerName').value,
+  OwnerID:$('#OwnerID').value,
+  AmendDetails:$('#AmendDetails').value
+}))}
+function loadForm(){const d=localStorage.getItem('LF1042_FORM');if(d){const o=JSON.parse(d);$('#OwnerName').value=o.OwnerName||'';$('#OwnerID').value=o.OwnerID||'';$('#AmendDetails').value=o.AmendDetails||''}
+/* const owner=localStorage.getItem(SIG_OWNER_KEY);if(owner)setSigPreview('owner',owner,false);
+const witness=localStorage.getItem(SIG_WITNESS_KEY);if(witness)setSigPreview('witness',witness,false); */ }
 
-const SIG_OWNER_KEY = 'LF1042_SIG_OWNER';
-const SIG_WITNESS_KEY = 'LF1042_SIG_WITNESS';
----------------------------------------*/
+['OwnerName','OwnerID','AmendDetails'].forEach(id=>{ $(id).addEventListener('input',saveForm); });
 
-window.addEventListener('load',loadForm);
-['PolicyNo','OwnerName','Date'].forEach(id=>{
-  $( '#'+id ).addEventListener('input',saveForm);
-});
-
-function saveForm(){
-  const data={};
-  ['PolicyNo','OwnerName','Date'].forEach(id=>{
-    data[id]=$('#'+id).value;
-  });
-  localStorage.setItem('LF1042_FORM',JSON.stringify(data));
-}
-
-function loadForm(){
-  const data=JSON.parse(localStorage.getItem('LF1042_FORM')||'{}');
-  Object.keys(data).forEach(id=>{
-    if($('#'+id)) $('#'+id).value=data[id];
-  });
-
-  /* --- Restore sigs disabled
-  const owner=localStorage.getItem(SIG_OWNER_KEY);
-  if(owner) setSigPreview('owner',owner,false);
-
-  const witness=localStorage.getItem(SIG_WITNESS_KEY);
-  if(witness) setSigPreview('witness',witness,false);
-  -----------------------------------------------*/
-}
-
-/* --- Signature pad logic disabled
-let currentSigField=null;
-const sigModal=$('#sigModal');
-const sigCanvas=$('#sigCanvas');
-const ctx=sigCanvas?sigCanvas.getContext('2d'):null;
-let drawing=false;
-
-function openSigPad(field){
-  currentSigField=field;
-  sigModal.style.display='flex';
-  resizeCanvas();
-}
-function resizeCanvas(){...}
-sigCanvas?.addEventListener('mousedown',...);
-$('#clearSig')?.addEventListener('click',...);
-$('#saveSig')?.addEventListener('click',...);
-----------------------------------------------*/
+// --- Signature logic disabled ---
+/*
+let currentSigTarget=null;
+function setSigPreview(target,dataUrl,store=true){const el=target==='owner'?$('#OwnerSigPreview'):$('#WitnessSigPreview');el.innerHTML='<img src="'+dataUrl+'" />';if(store){localStorage.setItem(target==='owner'?SIG_OWNER_KEY:SIG_WITNESS_KEY,dataUrl)}}
+function openSigModal(target){currentSigTarget=target;$('#sigModal').style.display='flex';clearSigCanvas();}
+function closeSigModal(){$('#sigModal').style.display='none'}
+const sigCanvas=$('#sigCanvas');const sigCtx=sigCanvas.getContext('2d');let drawing=false;
+sigCanvas.addEventListener('mousedown',e=>{drawing=true;sigCtx.moveTo(e.offsetX,e.offsetY)});
+sigCanvas.addEventListener('mousemove',e=>{if(drawing){sigCtx.lineTo(e.offsetX,e.offsetY);sigCtx.stroke()}});
+sigCanvas.addEventListener('mouseup',()=>{drawing=false});
+function clearSigCanvas(){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height)}
+$('#sigClear').onclick=clearSigCanvas;
+$('#sigSave').onclick=function(){const dataUrl=sigCanvas.toDataURL();setSigPreview(currentSigTarget,dataUrl);closeSigModal();}
+$('#sigCancel').onclick=closeSigModal;
+$('#OwnerSigPreview').onclick=()=>openSigModal('owner');
+$('#WitnessSigPreview').onclick=()=>openSigModal('witness');
+*/
+// --- End Signature logic disabled ---
 
 async function generatePdf(){
-  const url='https://example.com/LF1042_blank.pdf'; // replace with real
-  const existing=await fetch(url).then(r=>r.arrayBuffer());
-  const pdfDoc=await PDFLib.PDFDocument.load(existing);
-  const font=await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-
-  const page=pdfDoc.getPages()[0];
-  page.setFont(font);
-  page.setFontSize(11);
-
-  Object.entries(FIELDS).forEach(([id,coords])=>{
-    const val=$('#'+id).value;
-    if(val){
-      page.drawText(val,{x:coords.x,y:coords.y});
-    }
-  });
-
-  /* --- Signature embedding disabled
-  const ownerSigDataUrl=localStorage.getItem(SIG_OWNER_KEY);
-  const witnessSigDataUrl=localStorage.getItem(SIG_WITNESS_KEY);
-  const page=pdfDoc.getPages()[0];
-
-  if(ownerSigDataUrl){ ... }
-  if(witnessSigDataUrl){ ... }
-  --------------------------------*/
-
-  const pdfBytes=await pdfDoc.save();
-  const blob=new Blob([pdfBytes],{type:'application/pdf'});
-  const urlObj=URL.createObjectURL(blob);
-  window.open(urlObj,'_blank');
+  const url="LF1042_blank.pdf";const pdfBytes=await fetch(url).then(r=>r.arrayBuffer());const pdfDoc=await PDFLib.PDFDocument.load(pdfBytes);const page=pdfDoc.getPages()[0];const font=await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);const draw=(txt,x,y)=>{page.drawText(txt,{x,y,size:10,font})};
+  draw($('#OwnerName').value,120,635);
+  draw($('#OwnerID').value,120,615);
+  draw($('#AmendDetails').value,120,590);
+  /* --- Signature embedding disabled ---
+  const ownerSigDataUrl=localStorage.getItem(SIG_OWNER_KEY);if(ownerSigDataUrl){const sigBytes=await fetch(ownerSigDataUrl).then(r=>r.arrayBuffer());const sigImg=await pdfDoc.embedPng(sigBytes);page.drawImage(sigImg,{x:OWNER_SIG.X,y:OWNER_SIG.Y,width:sigImg.width*OWNER_SIG.SCALE_PCT/100,height:sigImg.height*OWNER_SIG.SCALE_PCT/100});}
+  const witnessSigDataUrl=localStorage.getItem(SIG_WITNESS_KEY);if(witnessSigDataUrl){const sigBytes=await fetch(witnessSigDataUrl).then(r=>r.arrayBuffer());const sigImg=await pdfDoc.embedPng(sigBytes);page.drawImage(sigImg,{x:WITNESS_SIG.X,y:WITNESS_SIG.Y,width:sigImg.width*WITNESS_SIG.SCALE_PCT/100,height:sigImg.height*WITNESS_SIG.SCALE_PCT/100});}
+  --- End Signature embedding disabled --- */
+  const pdfBytesOut=await pdfDoc.save();const blob=new Blob([pdfBytesOut],{type:'application/pdf'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='LF1042_filled.pdf';link.click();renderPdfOnCanvas(pdfBytesOut);
 }
-
-function resetAll(){
-  localStorage.removeItem('LF1042_FORM');
-  ['PolicyNo','OwnerName','Date'].forEach(id=>{
-    $('#'+id).value='';
-  });
-
-  /* --- Reset sigs disabled
-  localStorage.removeItem(SIG_OWNER_KEY);
-  localStorage.removeItem(SIG_WITNESS_KEY);
-  $('#OwnerSigPreview').innerHTML='<span>Tap to Sign (Owner)</span>';
-  $('#WitnessSigPreview').innerHTML='<span>Tap to Sign (Witness)</span>';
-  ---------------------------------*/
-}
+async function renderPdfOnCanvas(pdfBytes){const pdf=await pdfjsLib.getDocument({data:pdfBytes}).promise;const page=await pdf.getPage(1);const viewport=page.getViewport({scale:1});const canvas=$('#pdfCanvas');canvas.height=viewport.height;canvas.width=viewport.width;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise}
+function resetAll(){localStorage.removeItem('LF1042_FORM');
+/* localStorage.removeItem(SIG_OWNER_KEY);localStorage.removeItem(SIG_WITNESS_KEY);$('#OwnerSigPreview').innerHTML='<span>Tap to Sign (Owner)</span>';$('#WitnessSigPreview').innerHTML='<span>Tap to Sign (Witness)</span>'; */
+document.getElementById("mainForm").reset();$('#pdfCanvas').getContext('2d').clearRect(0,0,$('#pdfCanvas').width,$('#pdfCanvas').height);}
+$('#genPdf').onclick=generatePdf;$('#resetForm').onclick=resetAll;
+loadForm();
 </script>
 </body>
 </html>
