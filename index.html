@@ -1,1 +1,196 @@
-html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Amendment to Application — Web Filler (LF1042)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<!-- pdf-lib for filling & flattening -->
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<!-- pdfjs-dist for rendering PDFs -->
+<script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+
+<style>
+:root {
+  --bg:#f6f7f9; --card:#fff; --accent:#007aff; --muted:#666; --line:#e9e9ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111;padding:20px;line-height:1.4}
+h1{font-size:20px;font-weight:600;margin-bottom:20px;text-align:center}
+.section{background:var(--card);padding:16px;margin-bottom:16px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.section h3{font-size:16px;margin-bottom:12px;color:var(--accent)}
+label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+input[type=text],input[type=date],input[type=number]{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;font-size:14px}
+button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:500;cursor:pointer;width:100%;margin-top:10px}
+button.secondary{background:#e9e9ee;color:#111}
+.actions{display:flex;gap:10px}
+.actions button{flex:1}
+
+/* --- Signature-related CSS (disabled) ---
+.sig-preview{border:1px dashed var(--line);border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;cursor:pointer;background:#fafafa}
+.sig-preview img{max-height:100%;max-width:100%}
+.sig-preview span{color:var(--muted);font-size:13px}
+.sig-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000}
+.sig-modal .box{background:#fff;padding:16px;border-radius:12px;width:90%;max-width:400px}
+#sigCanvas{border:1px solid var(--line);border-radius:8px;width:100%;height:200px}
+.sig-actions{display:flex;gap:10px;margin-top:10px}
+-------------------------------------------*/
+</style>
+</head>
+<body>
+<h1>Amendment to Application — Web Filler</h1>
+
+<div class="section">
+  <h3>Policy Information</h3>
+  <label>Policy No.</label>
+  <input type="text" id="PolicyNo" placeholder="Enter policy number" />
+  <label>Policy Owner’s Name</label>
+  <input type="text" id="OwnerName" placeholder="Enter owner name" />
+  <label>Date</label>
+  <input type="date" id="Date" />
+</div>
+
+<!-- Signature Sections disabled
+<div class="section">
+  <h3>Owner Signature</h3>
+  <div id="OwnerSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
+</div>
+<div class="section">
+  <h3>Witness Signature</h3>
+  <div id="WitnessSigPreview" class="sig-preview"><span>Tap to Sign</span></div>
+</div>
+-->
+
+<div class="section">
+  <h3>Actions</h3>
+  <div class="actions">
+    <button onclick="generatePdf()">Generate PDF</button>
+    <button class="secondary" onclick="resetAll()">Reset All</button>
+  </div>
+</div>
+
+<!-- Signature Modal disabled
+<div id="sigModal" class="sig-modal">
+  <div class="box">
+    <canvas id="sigCanvas"></canvas>
+    <div class="sig-actions">
+      <button class="secondary" id="clearSig">Clear</button>
+      <button id="saveSig">Save</button>
+    </div>
+  </div>
+</div>
+-->
+
+<script>
+const $ = s=>document.querySelector(s);
+
+// PDF field coords
+const FIELDS = {
+  PolicyNo: { x: 70, y: 740 },
+  OwnerName: { x: 70, y: 710 },
+  Date: { x: 400, y: 710 }
+};
+
+/* --- Signature constants (disabled)
+const OWNER_SIG = { X: 370, Y: 145, SCALE_PCT: 11 };
+const WITNESS_SIG = { X: 70, Y: 145, SCALE_PCT: 11 };
+const useHiddenSigInputs = false;
+
+const SIG_OWNER_KEY = 'LF1042_SIG_OWNER';
+const SIG_WITNESS_KEY = 'LF1042_SIG_WITNESS';
+---------------------------------------*/
+
+window.addEventListener('load',loadForm);
+['PolicyNo','OwnerName','Date'].forEach(id=>{
+  $( '#'+id ).addEventListener('input',saveForm);
+});
+
+function saveForm(){
+  const data={};
+  ['PolicyNo','OwnerName','Date'].forEach(id=>{
+    data[id]=$('#'+id).value;
+  });
+  localStorage.setItem('LF1042_FORM',JSON.stringify(data));
+}
+
+function loadForm(){
+  const data=JSON.parse(localStorage.getItem('LF1042_FORM')||'{}');
+  Object.keys(data).forEach(id=>{
+    if($('#'+id)) $('#'+id).value=data[id];
+  });
+
+  /* --- Restore sigs disabled
+  const owner=localStorage.getItem(SIG_OWNER_KEY);
+  if(owner) setSigPreview('owner',owner,false);
+
+  const witness=localStorage.getItem(SIG_WITNESS_KEY);
+  if(witness) setSigPreview('witness',witness,false);
+  -----------------------------------------------*/
+}
+
+/* --- Signature pad logic disabled
+let currentSigField=null;
+const sigModal=$('#sigModal');
+const sigCanvas=$('#sigCanvas');
+const ctx=sigCanvas?sigCanvas.getContext('2d'):null;
+let drawing=false;
+
+function openSigPad(field){
+  currentSigField=field;
+  sigModal.style.display='flex';
+  resizeCanvas();
+}
+function resizeCanvas(){...}
+sigCanvas?.addEventListener('mousedown',...);
+$('#clearSig')?.addEventListener('click',...);
+$('#saveSig')?.addEventListener('click',...);
+----------------------------------------------*/
+
+async function generatePdf(){
+  const url='https://example.com/LF1042_blank.pdf'; // replace with real
+  const existing=await fetch(url).then(r=>r.arrayBuffer());
+  const pdfDoc=await PDFLib.PDFDocument.load(existing);
+  const font=await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+  const page=pdfDoc.getPages()[0];
+  page.setFont(font);
+  page.setFontSize(11);
+
+  Object.entries(FIELDS).forEach(([id,coords])=>{
+    const val=$('#'+id).value;
+    if(val){
+      page.drawText(val,{x:coords.x,y:coords.y});
+    }
+  });
+
+  /* --- Signature embedding disabled
+  const ownerSigDataUrl=localStorage.getItem(SIG_OWNER_KEY);
+  const witnessSigDataUrl=localStorage.getItem(SIG_WITNESS_KEY);
+  const page=pdfDoc.getPages()[0];
+
+  if(ownerSigDataUrl){ ... }
+  if(witnessSigDataUrl){ ... }
+  --------------------------------*/
+
+  const pdfBytes=await pdfDoc.save();
+  const blob=new Blob([pdfBytes],{type:'application/pdf'});
+  const urlObj=URL.createObjectURL(blob);
+  window.open(urlObj,'_blank');
+}
+
+function resetAll(){
+  localStorage.removeItem('LF1042_FORM');
+  ['PolicyNo','OwnerName','Date'].forEach(id=>{
+    $('#'+id).value='';
+  });
+
+  /* --- Reset sigs disabled
+  localStorage.removeItem(SIG_OWNER_KEY);
+  localStorage.removeItem(SIG_WITNESS_KEY);
+  $('#OwnerSigPreview').innerHTML='<span>Tap to Sign (Owner)</span>';
+  $('#WitnessSigPreview').innerHTML='<span>Tap to Sign (Witness)</span>';
+  ---------------------------------*/
+}
+</script>
+</body>
+</html>
