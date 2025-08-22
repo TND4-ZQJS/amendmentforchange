@@ -372,16 +372,36 @@ async function fillPDF(){
 
     // Policyowner signature
     const sigPolicyowner = localStorage.getItem("sig_policyowner");
-    if (sigPolicyowner) {
-      const img = await pdfDoc.embedPng(sigPolicyowner);
-      const { width, height } = img.size();
-      page.drawImage(img, {
-        x: 400,
-        y: 140,
-        width: width * 0.09,
-        height: height * 0.09
-      });
-    }
+if (sigPolicyowner) {
+  try {
+    const imgPolicyowner = await pdfDoc.embedPng(sigPolicyowner);
+    const { width, height } = imgPolicyowner.size();
+
+    const previewEl = document.getElementById("preview_policyowner");
+    const boxW = previewEl.offsetWidth;
+    const boxH = previewEl.offsetHeight;
+
+    const scale = Math.min(boxW / width, boxH / height);
+    let drawW = width * scale;
+    let drawH = height * scale;
+
+    const factor = 0.40;    // 40% scale
+    const posX = 50;         // X position on PDF
+    const posY = 490;        // Y position on PDF
+
+    drawW *= factor;
+    drawH *= factor;
+
+    page.drawImage(imgPolicyowner, {
+      x: posX,
+      y: posY,
+      width: drawW,
+      height: drawH
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
 
     // Witness signature
     const sigWitness = localStorage.getItem("sig_witness");
