@@ -248,8 +248,8 @@ function resizeSigCanvas(){
   scaleX = sigCanvas.width / (sigCanvas.getBoundingClientRect().width || cssWidth);
   scaleY = sigCanvas.height / (sigCanvas.getBoundingClientRect().height || cssHeight);
  // White background (prevents transparent PNG on PDF)——————
-  sigCtx.fillStyle = "#fff";
-  sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+  //sigCtx.fillStyle = "#fff";
+  //sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
 }
 
 
