@@ -342,7 +342,8 @@ window.addEventListener("resize", ()=> {
   /* Clear preview buttons + restore previews on load */
 $("clearPreviewPolicyowner").addEventListener("click", ()=>{
   localStorage.removeItem("sig_policyowner");
-  $("preview_policyowner").innerHTML = `<span>Tap to Sign (Proposed Life Insured / Policyowner)</span>`;
+  $("preview_policyowner").innerHTML = `<span>Tap to Sign 
+  (Proposed Life Insured / Policyowner)</span>`;
 });
 $("clearPreviewWitness").addEventListener("click", ()=>{
   localStorage.removeItem("sig_witness");
@@ -388,8 +389,8 @@ async function fillPDF(){
       const img = await pdfDoc.embedPng(sigWitness);
       const { width, height } = img.size();
       page.drawImage(img, {
-        x: 70,
-        y: 80,
+        x: 80,
+        y: 100,
         width: width * 0.12,
         height: height * 0.12
       });
