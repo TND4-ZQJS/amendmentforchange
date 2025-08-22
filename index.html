@@ -259,7 +259,7 @@ function resizeSigCanvas(){
 
 function openSig(target){
   sigTarget = target; // 'policyowner' | 'witness'
-  $("sigModalTitle").textContent = target === 'policyowner' ? "Sign: Policy Owner" : "Sign: Witness";
+  $("sigModalTitle").textContent = target === 'policyowner' ? "Sign: Proposed Life Insured / Policy Owner" : "Sign: Witness";
   sigModal.style.display = "block";
   sigModal.setAttribute("aria-hidden", "false");
   // Next frame: ensure layout settled then resize canvas
@@ -347,7 +347,7 @@ window.addEventListener("resize", ()=> {
 $("clearPreviewPolicyowner").addEventListener("click", ()=>{
   localStorage.removeItem("sig_policyowner");
   $("preview_policyowner").innerHTML = `<span>Tap to Sign (
-  Policy Owner)</span>`;
+  Proposed Life Insured / Policy Owner)</span>`;
 });
 $("clearPreviewWitness").addEventListener("click", ()=>{
   localStorage.removeItem("sig_witness");
