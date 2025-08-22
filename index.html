@@ -388,10 +388,10 @@ async function fillPDF(){
       const img = await pdfDoc.embedPng(sigWitness);
       const { width, height } = img.size();
       page.drawImage(img, {
-        x: 200,
-        y: 200,
-        width: width * 0.10,
-        height: height * 0.10
+        x: 70,
+        y: 80,
+        width: width * 0.12,
+        height: height * 0.12
       });
     }
 
