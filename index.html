@@ -360,7 +360,67 @@ window.addEventListener("DOMContentLoaded", ()=>{
   });
 });
 
+  /* ---------- Generate PDF ---------- */
+async function fillPDF(){
+  try {
+    $("generate").disabled = true;
 
+    const res = await fetch(PDF_FILENAME);
+    if (!res.ok) throw new Error("Cannot load PDF: " + PDF_FILENAME);
+    const bytes = await res.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+    const form = pdfDoc.getForm();
+
+    const pages = pdfDoc.getPages();
+    const page = pages[0]; // use first page
+
+    // Policyowner signature
+    const sigPolicyowner = localStorage.getItem("sig_policyowner");
+    if (sigPolicyowner) {
+      const img = await pdfDoc.embedPng(sigPolicyowner);
+      const { width, height } = img.size();
+      page.drawImage(img, {
+        x: 50,
+        y: 490,
+        width: width * 0.4,
+        height: height * 0.4
+      });
+    }
+
+    // Witness signature
+    const sigWitness = localStorage.getItem("sig_witness");
+    if (sigWitness) {
+      const img = await pdfDoc.embedPng(sigWitness);
+      const { width, height } = img.size();
+      page.drawImage(img, {
+        x: 370,
+        y: 490,
+        width: width * 0.45,
+        height: height * 0.45
+      });
+    }
+
+    //Flatten Signature
+    form.flatten();
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Amendment_to_Application_LF1042_filled.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 2500);
+
+  } catch(err){
+    alert("PDF generation failed: " + (err.message || err));
+    console.error(err);
+  } finally {
+    $("generate").disabled = false;
+  }
+}
 
 </script>
 </main> 
