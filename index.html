@@ -339,6 +339,23 @@ window.addEventListener("resize", ()=> {
   }
 });
 
+  /* Clear preview buttons + restore previews on load */
+$("clearPreviewPolicyowner").addEventListener("click", ()=>{
+  localStorage.removeItem("sig_policyowner");
+  $("preview_policyowner").innerHTML = `<span>Tap to Sign (
+  Policy Owner)</span>`;
+});
+$("clearPreviewWitness").addEventListener("click", ()=>{
+  localStorage.removeItem("sig_witness");
+  $("preview_witness").innerHTML = `<span>Tap to Sign (Witness)</span>`;
+});
+window.addEventListener("DOMContentLoaded", ()=>{
+  ["policyowner","witness"].forEach(role=>{
+    const saved = localStorage.getItem("sig_"+role);
+    if(saved){ $("preview_"+role).innerHTML = `<img alt="Signature ${role}" src="${saved}">`; }
+  });
+});
+
 
 
 </script>
