@@ -404,17 +404,37 @@ if (sigPolicyowner) {
 }
 
     // Witness signature
-    const sigWitness = localStorage.getItem("sig_witness");
-    if (sigWitness) {
-      const img = await pdfDoc.embedPng(sigWitness);
-      const { width, height } = img.size();
-      page.drawImage(img, {
-        x: 75,
-        y: 145,
-        width: width * 0.08,
-        height: height * 0.08
-      });
-    }
+    const sigWitness = localStorage.getItem("sig_Witness");
+if (sigWitness) {
+  try {
+    const imgWitness = await pdfDoc.embedPng(sigWitness);
+    const { width, height } = imgWitness.size();
+
+    const previewEl = document.getElementById("preview_witness");
+    const boxW = previewEl.offsetWidth;
+    const boxH = previewEl.offsetHeight;
+
+    const scale = Math.min(boxW / width, boxH / height);
+    let drawW = width * scale;
+    let drawH = height * scale;
+
+    const factor = 0.35;    // 40% scale
+    const posX = 200;         // X position on PDF
+    const posY = 145;        // Y position on PDF
+
+    drawW *= factor;
+    drawH *= factor;
+
+    page.drawImage(imgWitness, {
+      x: posX,
+      y: posY,
+      width: drawW,
+      height: drawH
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
 
     //Flatten Signature
     form.flatten();
