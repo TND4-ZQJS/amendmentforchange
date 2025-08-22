@@ -254,8 +254,8 @@ function resizeSigCanvas(){
 
 
 function openSig(target){
-  sigTarget = target; // 'owner' | 'payor'
-  $("sigModalTitle").textContent = target === 'owner' ? "Sign: Policy Owner" : "Sign: Payor";
+  sigTarget = target; // 'policyowner' | 'witness'
+  $("sigModalTitle").textContent = target === 'policyowner' ? "Sign: Policy Owner" : "Sign: Witness";
   sigModal.style.display = "block";
   sigModal.setAttribute("aria-hidden", "false");
   // Next frame: ensure layout settled then resize canvas
