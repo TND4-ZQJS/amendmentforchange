@@ -300,75 +300,35 @@ $("sigDone").addEventListener("click", ()=>{
 function getPos(e){
   const rect = sigCanvas.getBoundingClientRect();
   if(e.touches && e.touches[0]){
-    return { 
-      x: (e.touches[0].clientX - rect.left), 
-      y: (e.touches[0].clientY - rect.top) 
-    };
+    return { x: (e.touches[0].clientX - rect.left), y: (e.touches[0].clientY - rect.top) };
   }
   return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
 }
-
-let drawing = false;
-let lastX, lastY, lastTime;
-
-// set ink style
-sigCtx.lineCap = "round";
-sigCtx.lineJoin = "round";
-sigCtx.strokeStyle = "rgba(0,0,0,0.95)";
-sigCtx.lineWidth = 2;
-
 function startDraw(e){
   drawing = true;
+  sigCtx.beginPath();
   const {x,y}=getPos(e);
-  lastX = x;
-  lastY = y;
-  lastTime = Date.now();
+  sigCtx.moveTo(x, y);
+  e.preventDefault?.();
+}
+function endDraw(){ drawing = false; sigCtx.beginPath(); }
+function moveDraw(e){
+  if(!drawing) return;
+  const {x,y} = getPos(e);
+  sigCtx.lineTo(x, y);
+  sigCtx.stroke();
   sigCtx.beginPath();
   sigCtx.moveTo(x, y);
   e.preventDefault?.();
 }
-
-function endDraw(){ 
-  drawing = false; 
-  sigCtx.beginPath(); 
-}
-
-function moveDraw(e){
-  if(!drawing) return;
-  const {x,y} = getPos(e);
-
-  // calculate speed
-  const now = Date.now();
-  const dx = x - lastX, dy = y - lastY;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  const time = now - lastTime || 16;
-  const speed = dist / time;
-
-  // slower = thicker line
-  const newLineWidth = Math.max(1, 4 - speed*2);
-  sigCtx.lineWidth = newLineWidth;
-
-  // smooth curve
-  const midX = (lastX + x) / 2;
-  const midY = (lastY + y) / 2;
-  sigCtx.quadraticCurveTo(lastX, lastY, midX, midY);
-  sigCtx.stroke();
-
-  lastX = x;
-  lastY = y;
-  lastTime = now;
-  e.preventDefault?.();
-}
-
 sigCanvas.addEventListener("mousedown", startDraw);
 sigCanvas.addEventListener("mousemove", moveDraw);
 window.addEventListener("mouseup", endDraw);
-
 sigCanvas.addEventListener("touchstart", startDraw, {passive:false});
 sigCanvas.addEventListener("touchmove", moveDraw, {passive:false});
 sigCanvas.addEventListener("touchend", endDraw);
-
 window.addEventListener("resize", ()=> {
+  // Only resize when modal is open to avoid reflow glitches
   if(sigModal.getAttribute("aria-hidden")==="false"){ 
     const img = new Image();
     img.onload = ()=>{
