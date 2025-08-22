@@ -221,8 +221,124 @@
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 <script>
 /* ---------- CONFIG ---------- */
-const PDF_FILENAME = "Credit Card Enrolment Form_LF4092_200524_fillable.pdf";
-  
+const PDF_FILENAME = "Amendment to Application_LF1042_fillable.pdf";
+
+  /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
+
+let sigTarget = null;
+const sigModal = $("sigModal");
+const sigCanvas = $("sigCanvas");
+const sigCtx = sigCanvas.getContext("2d");
+let drawing = false;
+let scaleX = 1, scaleY = 1;
+
+/* Resize canvas to look crisp on any screen size & DPR ————— */
+
+function resizeSigCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = sigCanvas.clientWidth || sigCanvas.parentElement.clientWidth || 560;
+  const cssHeight = sigCanvas.clientHeight || 220;
+  sigCanvas.width = Math.max(1, Math.floor(cssWidth * dpr));
+  sigCanvas.height = Math.max(1, Math.floor(cssHeight * dpr));
+  sigCtx.setTransform(1,0,0,1,0,0); // reset
+  sigCtx.scale(dpr, dpr);
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = "round";
+  sigCtx.strokeStyle = "#000";
+  scaleX = sigCanvas.width / (sigCanvas.getBoundingClientRect().width || cssWidth);
+  scaleY = sigCanvas.height / (sigCanvas.getBoundingClientRect().height || cssHeight);
+ // White background (prevents transparent PNG on PDF)——————
+  sigCtx.fillStyle = "#fff";
+  sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+}
+
+
+function openSig(target){
+  sigTarget = target; // 'owner' | 'payor'
+  $("sigModalTitle").textContent = target === 'owner' ? "Sign: Policy Owner" : "Sign: Payor";
+  sigModal.style.display = "block";
+  sigModal.setAttribute("aria-hidden", "false");
+  // Next frame: ensure layout settled then resize canvas
+  requestAnimationFrame(()=>{
+    resizeSigCanvas();
+    // If there is an existing signature, draw it to current canvas size
+    const existing = localStorage.getItem("sig_"+target);
+    if (existing){
+      const img = new Image();
+      img.onload = ()=>{
+        // cover the canvas area with existing image
+        sigCtx.drawImage(img, 0, 0, sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+      };
+      img.src = existing;
+    }
+  });
+}
+
+
+$("sigClear").addEventListener("click", ()=>{
+  sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
+  // Repaint white bg in CSS pixels
+  sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+});
+$("sigCancel").addEventListener("click", closeSigModal);
+function closeSigModal(){
+  sigModal.style.display = "none";
+  sigModal.setAttribute("aria-hidden", "true");
+  sigTarget = null;
+}
+$("sigDone").addEventListener("click", ()=>{
+  if(!sigTarget) return;
+  const dataURL = sigCanvas.toDataURL("image/png");
+  localStorage.setItem("sig_"+sigTarget, dataURL);
+  const preview = $("preview_"+sigTarget);
+  preview.innerHTML = `<img alt="Signature ${sigTarget}" src="${dataURL}">`;
+  closeSigModal();
+});
+
+
+/* Drawing (mouse + touch) with coordinate conversion */
+function getPos(e){
+  const rect = sigCanvas.getBoundingClientRect();
+  if(e.touches && e.touches[0]){
+    return { x: (e.touches[0].clientX - rect.left), y: (e.touches[0].clientY - rect.top) };
+  }
+  return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
+}
+function startDraw(e){
+  drawing = true;
+  sigCtx.beginPath();
+  const {x,y}=getPos(e);
+  sigCtx.moveTo(x, y);
+  e.preventDefault?.();
+}
+function endDraw(){ drawing = false; sigCtx.beginPath(); }
+function moveDraw(e){
+  if(!drawing) return;
+  const {x,y} = getPos(e);
+  sigCtx.lineTo(x, y);
+  sigCtx.stroke();
+  sigCtx.beginPath();
+  sigCtx.moveTo(x, y);
+  e.preventDefault?.();
+}
+sigCanvas.addEventListener("mousedown", startDraw);
+sigCanvas.addEventListener("mousemove", moveDraw);
+window.addEventListener("mouseup", endDraw);
+sigCanvas.addEventListener("touchstart", startDraw, {passive:false});
+sigCanvas.addEventListener("touchmove", moveDraw, {passive:false});
+sigCanvas.addEventListener("touchend", endDraw);
+window.addEventListener("resize", ()=> {
+  // Only resize when modal is open to avoid reflow glitches
+  if(sigModal.getAttribute("aria-hidden")==="false"){ 
+    const img = new Image();
+    img.onload = ()=>{
+      resizeSigCanvas();
+      sigCtx.drawImage(img, 0, 0, sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+    };
+    img.src = sigCanvas.toDataURL("image/png");
+  }
+});
+
 
 
 </script>
