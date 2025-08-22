@@ -376,7 +376,7 @@ async function fillPDF(){
       const img = await pdfDoc.embedPng(sigPolicyowner);
       const { width, height } = img.size();
       page.drawImage(img, {
-        x: 200,
+        x: 400,
         y: 145,
         width: width * 0.08,
         height: height * 0.08
