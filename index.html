@@ -296,44 +296,91 @@ $("sigDone").addEventListener("click", ()=>{
 });
 
 
-/* Drawing (mouse + touch) with coordinate conversion */
-function getPos(e){
+/* =====Drawing (mouse + touch) with coordinate conversion===== */
+// --- Setup drawing variables ---
+let drawing = false;
+let lastX, lastY, lastTime;
+const sigCtx = sigCanvas.getContext("2d");
+
+// Ink style (realistic look)
+sigCtx.lineCap = "round";
+sigCtx.lineJoin = "round";
+sigCtx.strokeStyle = "rgba(0,0,0,0.95)";
+sigCtx.lineWidth = 2;
+
+// --- Helpers ---
+function getPos(e) {
   const rect = sigCanvas.getBoundingClientRect();
-  if(e.touches && e.touches[0]){
-    return { x: (e.touches[0].clientX - rect.left), y: (e.touches[0].clientY - rect.top) };
+  if (e.touches && e.touches[0]) {
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    };
   }
-  return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
-function startDraw(e){
+
+// --- Start drawing ---
+function startDraw(e) {
   drawing = true;
+  const { x, y } = getPos(e);
+  lastX = x;
+  lastY = y;
+  lastTime = Date.now();
   sigCtx.beginPath();
-  const {x,y}=getPos(e);
   sigCtx.moveTo(x, y);
   e.preventDefault?.();
 }
-function endDraw(){ drawing = false; sigCtx.beginPath(); }
-function moveDraw(e){
-  if(!drawing) return;
-  const {x,y} = getPos(e);
-  sigCtx.lineTo(x, y);
+
+// --- Stop drawing ---
+function endDraw() {
+  drawing = false;
+  sigCtx.beginPath();
+}
+
+// --- Draw movement with smoothing + thickness ---
+function moveDraw(e) {
+  if (!drawing) return;
+  const { x, y } = getPos(e);
+
+  const now = Date.now();
+  const dx = x - lastX, dy = y - lastY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const time = now - lastTime || 16;
+  const speed = dist / time;
+
+  // simulate pressure: slower = thicker
+  const newLineWidth = Math.max(1, 4 - speed * 2);
+  sigCtx.lineWidth = newLineWidth;
+
+  // smooth curve between points
+  const midX = (lastX + x) / 2;
+  const midY = (lastY + y) / 2;
+  sigCtx.quadraticCurveTo(lastX, lastY, midX, midY);
   sigCtx.stroke();
-  sigCtx.beginPath();
-  sigCtx.moveTo(x, y);
+
+  lastX = x;
+  lastY = y;
+  lastTime = now;
   e.preventDefault?.();
 }
+
+// --- Event listeners ---
 sigCanvas.addEventListener("mousedown", startDraw);
 sigCanvas.addEventListener("mousemove", moveDraw);
 window.addEventListener("mouseup", endDraw);
-sigCanvas.addEventListener("touchstart", startDraw, {passive:false});
-sigCanvas.addEventListener("touchmove", moveDraw, {passive:false});
+
+sigCanvas.addEventListener("touchstart", startDraw, { passive: false });
+sigCanvas.addEventListener("touchmove", moveDraw, { passive: false });
 sigCanvas.addEventListener("touchend", endDraw);
-window.addEventListener("resize", ()=> {
-  // Only resize when modal is open to avoid reflow glitches
-  if(sigModal.getAttribute("aria-hidden")==="false"){ 
+
+// --- Handle resizing ---
+window.addEventListener("resize", () => {
+  if (sigModal.getAttribute("aria-hidden") === "false") {
     const img = new Image();
-    img.onload = ()=>{
+    img.onload = () => {
       resizeSigCanvas();
-      sigCtx.drawImage(img, 0, 0, sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+      sigCtx.drawImage(img, 0, 0, sigCanvas.width / scaleX, sigCanvas.height / scaleY);
     };
     img.src = sigCanvas.toDataURL("image/png");
   }
