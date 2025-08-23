@@ -278,7 +278,7 @@ function openSig(target){
 $("sigClear").addEventListener("click", ()=>{
   sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
   // Repaint white bg in CSS pixels
-  sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+  // sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
 });
 $("sigCancel").addEventListener("click", closeSigModal);
 function closeSigModal(){
