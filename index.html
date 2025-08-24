@@ -220,11 +220,12 @@
   function $(id) {
   return document.getElementById(id);
 }
+  
 /* ---------- CONFIG ---------- */
 const PDF_FILENAME = "Amendment to Application_LF1042_fillable.pdf";
+  
 
-  /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
-
+/* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
 const sigModal = $("sigModal");
 const sigCanvas = $("sigCanvas");
@@ -232,8 +233,7 @@ const sigCtx = sigCanvas.getContext("2d");
 let drawing = false;
 let scaleX = 1, scaleY = 1;
 
-/* Resize canvas to look crisp on any screen size & DPR ————— */
-
+//Resize canvas to look crisp on any screen size & DPR
 function resizeSigCanvas(){
   const dpr = window.devicePixelRatio || 1;
   const cssWidth = sigCanvas.clientWidth || sigCanvas.parentElement.clientWidth || 560;
@@ -277,9 +277,11 @@ function openSig(target){
 
 $("sigClear").addEventListener("click", ()=>{
   sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
+  
   // Repaint white bg in CSS pixels
   // sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
 });
+  
 $("sigCancel").addEventListener("click", closeSigModal);
 function closeSigModal(){
   sigModal.style.display = "none";
@@ -296,7 +298,7 @@ $("sigDone").addEventListener("click", ()=>{
 });
 
 
-/* Drawing (mouse + touch) with coordinate conversion */
+//Drawing (mouse + touch) with coordinate conversion *//
 function getPos(e){
   const rect = sigCanvas.getBoundingClientRect();
   if(e.touches && e.touches[0]){
@@ -355,8 +357,9 @@ window.addEventListener("DOMContentLoaded", ()=>{
     if(saved){ $("preview_"+role).innerHTML = `<img alt="Signature ${role}" src="${saved}">`; }
   });
 });
+  
 
-  /* ---------- Generate PDF ---------- */
+/* ---------- GENERATE PDF ---------- */
 async function fillPDF(){
   try {
     $("generate").disabled = true;
