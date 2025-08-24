@@ -251,6 +251,17 @@ function autoBindSave(el){
     saveElValue(el);
   });
 }
+
+/* ---------- HELPER FUNCTION ---------- */
+  function safeSetText(form, fieldName, value) {
+    if (!value) return;
+    try {
+      const field = form.getTextField(fieldName);
+      field.setText(value.toUpperCase());
+    } catch (e) {
+      console.warn(`Field ${fieldName} not found in PDF`);
+    }
+  }
   
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
