@@ -562,7 +562,8 @@ if (sigWitness) {
 }
 
   //Autobind
-document.querySelectorAll("input[type=text]").forEach(autoBindSave);
+// Bind text inputs, textareas, and selects
+document.querySelectorAll("input[type=text], textarea, select").forEach(autoBindSave);
 
   // Attach when page loads
 $("generate").addEventListener("click", fillPDF);
