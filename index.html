@@ -223,7 +223,20 @@
   
 /* ---------- CONFIG ---------- */
 const PDF_FILENAME = "Amendment to Application_LF1042_fillable.pdf";
-  
+
+//Save Status
+const saveStatusEl = document.getElementById("saveStatus");
+
+function showSaveStatus(){
+  saveStatusEl.style.opacity = 1;
+  clearTimeout(saveStatusEl._timer);
+  saveStatusEl._timer = setTimeout(()=> saveStatusEl.style.opacity = 0, 1200);
+}
+
+function saveElValue(el){
+  localStorage.setItem(el.id, el.value);
+  showSaveStatus();
+}
 
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
@@ -460,6 +473,9 @@ if (sigWitness) {
     $("generate").disabled = false;
   }
 }
+
+  //Autobind
+document.querySelectorAll("input[type=text]").forEach(autoBindSave);
 
   // Attach when page loads
 $("generate").addEventListener("click", fillPDF);
