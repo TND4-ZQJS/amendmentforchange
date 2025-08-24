@@ -224,7 +224,7 @@
 /* ---------- CONFIG ---------- */
 const PDF_FILENAME = "Amendment to Application_LF1042_fillable.pdf";
 
-/* ---------- SAVE STATUS + LOCALSTORAGE ---------- */
+/* ---SAVE STATUS + LOCALSTORAGE (Text, Checkbox, Dropdown) ---------- */
 const saveStatusEl = document.getElementById("saveStatus");
 
 function showSaveStatus(){
@@ -241,27 +241,69 @@ function saveElValue(el){
 function autoBindSave(el){
   // Restore saved value
   const saved = localStorage.getItem(el.id);
-  if(saved !== null) el.value = saved;
-
-  // Bind save on input
-  el.addEventListener("input", ()=>{
-    if(el.type === "text"){
-      el.value = el.value.toUpperCase(); // force uppercase
-    }
-    saveElValue(el);
-  });
-}
-
-/* ---------- HELPER FUNCTION ---------- */
-  function safeSetText(form, fieldName, value) {
-    if (!value) return;
-    try {
-      const field = form.getTextField(fieldName);
-      field.setText(value.toUpperCase());
-    } catch (e) {
-      console.warn(`Field ${fieldName} not found in PDF`);
+  if(saved !== null){
+    if(el.type === "checkbox" || el.type === "radio"){
+      el.checked = (saved === "true"); // restore as boolean
+    } else {
+      el.value = saved; // text + dropdown
     }
   }
+
+  // Bind save
+  if(el.tagName === "SELECT"){  
+    el.addEventListener("change", ()=> saveElValue(el));
+  } else if(el.type === "checkbox" || el.type === "radio"){  
+    el.addEventListener("change", ()=> {
+      localStorage.setItem(el.id, el.checked);
+      showSaveStatus();
+    });
+  } else { // text input
+    el.addEventListener("input", ()=>{
+      el.value = el.value.toUpperCase(); // force uppercase
+      saveElValue(el);
+    });
+  }
+}
+  
+/* ---------- UNIVERSAL HELPER FUNCTION ---------- */
+function safeSetField(form, fieldName, value) {
+  if (value === null || value === undefined) return;
+
+  try {
+    let field;
+    try {
+      field = form.getTextField(fieldName);
+      field.setText(value.toUpperCase());
+      return;
+    } catch (e) {}
+
+    try {
+      field = form.getDropdown(fieldName);
+      field.select(value);
+      return;
+    } catch (e) {}
+
+    try {
+      field = form.getCheckBox(fieldName);
+      if (value === true || value === "true" || value === "on" || value === "checked") {
+        field.check();
+      } else {
+        field.uncheck();
+      }
+      return;
+    } catch (e) {}
+
+    try {
+      field = form.getRadioGroup(fieldName);
+      field.select(value);
+      return;
+    } catch (e) {}
+
+    console.warn(`Field ${fieldName} not found in PDF`);
+  } catch (err) {
+    console.error(`Error setting field ${fieldName}`, err);
+  }
+}
   
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
