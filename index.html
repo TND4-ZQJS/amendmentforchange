@@ -454,19 +454,23 @@ async function fillPDF(){
     const page = pages[0]; // use first page
 
     // ✅ FILL FORM FIELDS FROM LOCALSTORAGE HERE
-    safeSetText(form, "LifeProposed_Name", localStorage.getItem("LifeProposed_Name"));
-    safeSetText(form, "PolicyNo", localStorage.getItem("PolicyNo"));
-    safeSetText(form, "LifeProposed_NRIC", localStorage.getItem("LifeProposed_NRIC"));
-    safeSetText(form, "Amendment_WriteDetails", localStorage.getItem("Amendment_WriteDetails"));
-    safeSetText(form, "Signed_State", localStorage.getItem("Signed_State"));
-    safeSetText(form, "Signed_Day", localStorage.getItem("Signed_Day"));
-    safeSetText(form, "Signed_Month", localStorage.getItem("Signed_Month"));
-    safeSetText(form, "Signed_Year", localStorage.getItem("Signed_Year"));
-    safeSetText(form, "Sign_LifeProposedPO_Name", localStorage.getItem("Sign_LifeProposedPO_Name"));
-    safeSetText(form, "Sign_LifeProposedPO_NRIC", localStorage.getItem("Sign_LifeProposedPO_NRIC"));
-    safeSetText(form, "Sign_LifeProposedPO_Mobile", localStorage.getItem("Sign_LifeProposedPO_Mobile"));
-    safeSetText(form, "Sign_Witness_Name", localStorage.getItem("Sign_Witness_Name"));
-    safeSetText(form, "Sign_Witness_NRIC", localStorage.getItem("Sign_Witness_NRIC"));
+   [
+  "LifeProposed_Name",
+  "PolicyNo",
+  "LifeProposed_NRIC",
+  "Amendment_WriteDetails",
+  "Signed_State",
+  "Signed_Day",
+  "Signed_Month",
+  "Signed_Year",
+  "Sign_LifeProposedPO_Name",
+  "Sign_LifeProposedPO_NRIC",
+  "Sign_LifeProposedPO_Mobile",
+  "Sign_Witness_Name",
+  "Sign_Witness_NRIC"
+  ].forEach(fieldName => {
+  safeSetField(form, fieldName, localStorage.getItem(fieldName));
+  });
     
     // Policyowner signature
     const sigPolicyowner = localStorage.getItem("sig_policyowner");
