@@ -400,6 +400,21 @@ async function fillPDF(){
     const pages = pdfDoc.getPages();
     const page = pages[0]; // use first page
 
+    // ✅ FILL FORM FIELDS FROM LOCALSTORAGE HERE
+    safeSetText(form, "LifeProposed_Name", localStorage.getItem("LifeProposed_Name"));
+    safeSetText(form, "PolicyNo", localStorage.getItem("PolicyNo"));
+    safeSetText(form, "LifeProposed_NRIC", localStorage.getItem("LifeProposed_NRIC"));
+    safeSetText(form, "Amendment_WriteDetails", localStorage.getItem("Amendment_WriteDetails"));
+    safeSetText(form, "Signed_State", localStorage.getItem("Signed_State"));
+    safeSetText(form, "Signed_Day", localStorage.getItem("Signed_Day"));
+    safeSetText(form, "Signed_Month", localStorage.getItem("Signed_Month"));
+    safeSetText(form, "Signed_Year", localStorage.getItem("Signed_Year"));
+    safeSetText(form, "Sign_LifeProposedPO_Name", localStorage.getItem("Sign_LifeProposedPO_Name"));
+    safeSetText(form, "Sign_LifeProposedPO_NRIC", localStorage.getItem("Sign_LifeProposedPO_NRIC"));
+    safeSetText(form, "Sign_LifeProposedPO_Mobile", localStorage.getItem("Sign_LifeProposedPO_Mobile"));
+    safeSetText(form, "Sign_Witness_Name", localStorage.getItem("Sign_Witness_Name"));
+    safeSetText(form, "Sign_Witness_NRIC", localStorage.getItem("Sign_Witness_NRIC"));
+    
     // Policyowner signature
     const sigPolicyowner = localStorage.getItem("sig_policyowner");
 if (sigPolicyowner) {
@@ -469,6 +484,7 @@ if (sigWitness) {
     //Flatten Signature
     form.flatten();
 
+    //Save + Download
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
@@ -486,8 +502,6 @@ if (sigWitness) {
   } finally {
     $("generate").disabled = false;
   }
-
-  safeSetText(form, "LifeProposed_Name", localStorage.getItem("LifeProposed_Name"));
 }
 
   //Autobind
