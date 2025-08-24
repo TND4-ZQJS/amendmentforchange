@@ -224,7 +224,7 @@
 /* ---------- CONFIG ---------- */
 const PDF_FILENAME = "Amendment to Application_LF1042_fillable.pdf";
 
-//Save Status
+/* ---------- SAVE STATUS + LOCALSTORAGE ---------- */
 const saveStatusEl = document.getElementById("saveStatus");
 
 function showSaveStatus(){
@@ -238,6 +238,20 @@ function saveElValue(el){
   showSaveStatus();
 }
 
+function autoBindSave(el){
+  // Restore saved value
+  const saved = localStorage.getItem(el.id);
+  if(saved !== null) el.value = saved;
+
+  // Bind save on input
+  el.addEventListener("input", ()=>{
+    if(el.type === "text"){
+      el.value = el.value.toUpperCase(); // force uppercase
+    }
+    saveElValue(el);
+  });
+}
+  
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
 const sigModal = $("sigModal");
@@ -472,6 +486,8 @@ if (sigWitness) {
   } finally {
     $("generate").disabled = false;
   }
+
+  safeSetText(form, "LifeProposed_Name", localStorage.getItem("LifeProposed_Name"));
 }
 
   //Autobind
