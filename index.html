@@ -460,6 +460,27 @@ function wrapTextByWordsWithPrefix(text, maxCharsPerLine = 60) {
   showSaveStatus();
 });
 
+  document.getElementById("commonAmendment").addEventListener("change", function() {
+  const val = this.value;
+  if(val) {
+    const textarea = document.getElementById("Amendment_WriteDetails");
+    // Append to existing content, with numbering if empty
+    if(textarea.value.trim() === ""){
+      textarea.value = "1. " + val;
+    } else {
+      const lines = textarea.value.split("\n");
+      // Find last numbered item
+      let lastNum = 0;
+      lines.forEach(line => {
+        const m = line.match(/^(\d+)\./);
+        if(m) lastNum = Math.max(lastNum, parseInt(m[1]));
+      });
+      textarea.value += `\n${lastNum + 1}. ${val}`;
+    }
+    textarea.dispatchEvent(new Event("input")); // trigger save + uppercase
+  }
+  this.value = ""; // reset select
+});
   
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
