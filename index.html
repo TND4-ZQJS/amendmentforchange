@@ -514,7 +514,7 @@ async function fillPDF(){
     if (amendmentField) {
     amendmentField.enableMultiline(); // ✅ allow multiple lines in the PDF field
     const val = localStorage.getItem("Amendment_WriteDetails") || "";
-    amendmentField.setText(val);      // ✅ preserves \n from textarea
+    amendmentField.setText(val,90);      // ✅ preserves \n from textarea
     }
 
     // FILL FORM FIELDS FROM LOCALSTORAGE HERE
