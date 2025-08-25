@@ -35,9 +35,9 @@
 /* Select box */
 .dropdown-with-button select {
   width: 100%;
-  padding: 10px 60px 10px 12px; /* leave space for button */
+  padding: 10px 80px 10px 12px; /* leave space for button */
   border: 1px solid #ddd;
-  border-radius: 10px;          /* round corners */
+  border-radius: 10px;          
   font-size: 1rem;
   appearance: none;
   background-color: #fff;
@@ -47,7 +47,7 @@
 .dropdown-with-button select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(0,122,255,0.2);
 }
 
 /* Insert button */
@@ -57,38 +57,35 @@
   right: 0;
   bottom: 0;
   height: 100%;
-  padding: 0 14px;
-  border: 1px solid #ddd;       /* full border */
-  border-left: none;             /* remove left border for seamless merge */
-  border-radius: 0 10px 10px 0;  /* only right corners rounded */
-  background: #fff;              /* match select background */
+  padding: 0 16px;
+  border: 1px solid #ddd;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  background-color: #f7f8fa; /* subtle light background like iOS */
   color: var(--accent);
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
+  box-shadow: inset 0 -1px 0 #ccc; /* subtle inner shadow for depth */
 }
 
-/* Hover & Active for smooth visual feedback */
+/* Hover effect */
 .dropdown-with-button button.insert:hover {
-  background: rgba(0, 122, 255, 0.1);
+  background-color: #e5f0ff;
   border-color: var(--accent);
+  box-shadow: inset 0 -1px 0 #aaa;
 }
+
+/* Active (pressed) effect */
 .dropdown-with-button button.insert:active {
-  background: rgba(0, 122, 255, 0.2);
-  border-color: var(--accent);
+  background-color: #d0e4ff;
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
 }
-
-/* Optional: Add a subtle right-edge shadow for depth */
-.dropdown-with-button button.insert::after {
-  content: '';
-  position: absolute;
-  left: -1px;
-  top: 0;
-  width: 1px;
-  height: 100%;
-  background: #ddd;
-}
-
   
   /* Policy grid (for "additional policies" dynamic demo to mirror reference behavior) */
   .policy-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
