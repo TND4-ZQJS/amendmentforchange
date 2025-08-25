@@ -25,9 +25,10 @@
   button.secondary{background:#999}
   button.ghost{background:transparent;border:1px solid var(--line);color:#333}
   .actions{display:flex;gap:12px;align-items:center}
+  button.insert {background: transparent;border: 1px solid var(--line);color: var(--accent);padding: 8px 12px; border-radius: 10px; cursor: pointer;}
+  button.insert:hover {background: rgba(0, 122, 255, 0.1);}
 
-
-
+  
   /* Policy grid (for "additional policies" dynamic demo to mirror reference behavior) */
   .policy-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .policy{background:#fff;padding:12px;border-radius:10px;border:1px solid #eee;position:relative}
@@ -112,7 +113,7 @@
     <option>Update occupation details</option>
     </select>
     </label>
-    <button type="button" id="insertAmendment">Insert</button>
+    <button type="button" class="insert" id="insertAmendment">Insert</button>
     </div>
   </section>
 
