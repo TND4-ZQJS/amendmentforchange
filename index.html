@@ -341,7 +341,7 @@ document.getElementById("Amendment_WriteDetails").addEventListener("keydown", fu
 });
 
 // 2.Word wrap function for PDF export
-function wrapTextByWords(text, maxCharsPerLine = 60) {
+function wrapTextByWords(text, maxCharsPerLine = 50) {
   const lines = text.split("\n");
   const wrapped = [];
 
