@@ -339,6 +339,27 @@ document.getElementById("Amendment_WriteDetails").addEventListener("keydown", fu
   }
 });
 
+   // Text-Area : Word wrap function for PDF export
+function wrapText(text, maxCharsPerLine = 60) {
+  const lines = text.split("\n");
+  const wrapped = lines.map(line => {
+    if (line.length <= maxCharsPerLine) return line;
+    const parts = [];
+    let current = "";
+    line.split(" ").forEach(word => {
+      if ((current + word).length > maxCharsPerLine) {
+        parts.push(current.trim());
+        current = word + " ";
+      } else {
+        current += word + " ";
+      }
+    });
+    if (current.trim().length > 0) parts.push(current.trim());
+    return parts.join("\n");
+  });
+  return wrapped.join("\n");
+}
+  
   document.getElementById("Amendment_WriteDetails").addEventListener("input", function() {
   localStorage.setItem("Amendment_WriteDetails", this.value);
   showSaveStatus(); // optional: your save status indicator
@@ -502,34 +523,7 @@ async function fillPDF(){
     amendmentField.setText(val,90);      // ✅ preserves \n from textarea
     }
 
-    const amendmentField = form.getTextField("Amendment_WriteDetails");
-    if (amendmentField) {
-    amendmentField.enableMultiline(); // allows multiple lines in PDF
-    const rawVal = localStorage.getItem("Amendment_WriteDetails") || "";
-    const wrappedVal = wrapText(rawVal, 60); // ✅ wrap text only for PDF
-    amendmentField.setText(wrappedVal);
-    }
-
-    // Text-Area : Word wrap function for PDF export
-function wrapText(text, maxCharsPerLine = 60) {
-  const lines = text.split("\n");
-  const wrapped = lines.map(line => {
-    if (line.length <= maxCharsPerLine) return line;
-    const parts = [];
-    let current = "";
-    line.split(" ").forEach(word => {
-      if ((current + word).length > maxCharsPerLine) {
-        parts.push(current.trim());
-        current = word + " ";
-      } else {
-        current += word + " ";
-      }
-    });
-    if (current.trim().length > 0) parts.push(current.trim());
-    return parts.join("\n");
-  });
-  return wrapped.join("\n");
-}
+ 
 
     // FILL FORM FIELDS FROM LOCALSTORAGE HERE
    [
