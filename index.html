@@ -345,7 +345,7 @@ function wrapTextByWordsWithPrefix(text, maxCharsPerLine = 60) {
   const lines = text.split("\n");
   const wrapped = [];
 
-  lines.forEach(line => {
+  lines.forEach(line, index) => {
     // Detect prefix (numbering or dash)
     const prefixMatch = line.match(/^(\d+\.\s|-\s)/);
     const prefix = prefixMatch ? prefixMatch[0] : "";
