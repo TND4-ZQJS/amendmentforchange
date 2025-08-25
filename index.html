@@ -312,7 +312,8 @@ function safeSetField(form, fieldName, value) {
   }
 }
 
-// Text-Area : WhatsApp-style auto numbering/bullets
+// Text-Area formtting
+// 1. WhatsApp-style auto numbering/bullets
 document.getElementById("Amendment_WriteDetails").addEventListener("keydown", function(e) {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -339,7 +340,7 @@ document.getElementById("Amendment_WriteDetails").addEventListener("keydown", fu
   }
 });
 
-   // Text-Area : Word wrap function for PDF export
+// 2.Word wrap function for PDF export
 function wrapText(text, maxCharsPerLine = 60) {
   const lines = text.split("\n");
   const wrapped = lines.map(line => {
@@ -359,10 +360,16 @@ function wrapText(text, maxCharsPerLine = 60) {
   });
   return wrapped.join("\n");
 }
-  
+
+  // 3. Text Area saving to local storage 
   document.getElementById("Amendment_WriteDetails").addEventListener("input", function() {
+  const start = this.selectionStart;
+  const end = this.selectionEnd;
+  const original = this.value;
+  this.value = original.toUpperCase();
+  this.setSelectionRange(start, end); // restore cursor
   localStorage.setItem("Amendment_WriteDetails", this.value);
-  showSaveStatus(); // optional: your save status indicator
+  showSaveStatus();
 });
 
 
