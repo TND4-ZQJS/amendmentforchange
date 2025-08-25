@@ -26,30 +26,34 @@
   button.ghost{background:transparent;border:1px solid var(--line);color:#333}
   .actions{display:flex;gap:12px;align-items:center}
 
-  .dropdown-with-button {position: relative; display: inline-block; width: 100%;}
+.dropdown-with-button {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
 
 .dropdown-with-button select {
   width: 100%;
-  padding: 10px 60px 10px 10px; /* leave space for button */
+  padding: 10px 70px 10px 10px; /* leave space for the button */
   border-radius: 10px;
   border: 1px solid #ddd;
   font-size: 1rem;
   appearance: none;
+  background-color: #fff;
 }
 
 .dropdown-with-button button.insert {
   position: absolute;
-  right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #fff; /* can also use transparent */
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
   color: var(--accent);
-  padding: 6px 12px;
-  cursor: pointer;
   font-size: 0.95rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* subtle elevation like iOS */
+  cursor: pointer;
+  border-radius: 0 10px 10px 0;
 }
 
   
