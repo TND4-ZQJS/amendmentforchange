@@ -365,14 +365,13 @@ function wrapTextByWordsWithPrefix(text, maxCharsPerLine = 60) {
     if (currentLine.trim() !== "") wrapped.push(currentLine.trimEnd());
   });
 
-      // Insert a half-line spacing between numbered lines
-  return wrapped.map((line, idx) => {
-      // Only add extra spacing after numbered lines
-    if (/^\d+\.\s/.test(line) && idx < wrapped.length - 1) {
-      return line + "\n\u200A"; // hair space acts like a subtle half-line spacing
+      // Add a small extra line ONLY after numbered items (half-line spacing)
+    if (prefix && index < lines.length - 1) {
+      wrapped.push(""); // extra blank line after numbered item
     }
-    return line;
-  }).join("\n");
+  });
+
+  return wrapped.join("\n");
 }
   
   // 3. Text Area saving to local storage 
