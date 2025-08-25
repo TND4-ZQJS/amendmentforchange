@@ -47,6 +47,7 @@
   top: 0;
   right: 0;
   bottom: 0;
+  height: 100%,
   padding: 0 12px;
   border: none;
   background: transparent;
@@ -130,19 +131,18 @@
       <textarea id="Amendment_WriteDetails" class="persist" rows="15" placeholder="Describe the amendment in detail..."></textarea>
     </label>
 
-    <div class="dropdown-with-button">
-    <label>Common Amendment
-    <select id="Amendment_Common">
+    <label>Common Amendment</label>
+<div class="dropdown-with-button">
+  <select id="Amendment_Common">
     <option value="">-- Insert common amendment --</option>
     <option>Change of mailing address</option>
     <option>Update nominee information</option>
     <option>Correction of IC number</option>
     <option>Change of contact number</option>
     <option>Update occupation details</option>
-    </select>
-    </label>
-    <button type="button" class="insert">Insert</button>
-    </div>
+  </select>
+  <button type="button" class="insert">Insert</button>
+</div>
   </section>
 
   <!-- SECTION: Signature Details (Date/Place) -->
