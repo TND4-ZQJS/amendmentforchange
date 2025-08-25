@@ -345,7 +345,7 @@ function wrapTextByWordsWithPrefix(text, maxCharsPerLine = 60) {
   const lines = text.split("\n");
   const wrapped = [];
 
-  lines.forEach(line, index) => {
+  lines.forEach((line, index) => {  // <-- add index here
     // Detect prefix (numbering or dash)
     const prefixMatch = line.match(/^(\d+\.\s|-\s)/);
     const prefix = prefixMatch ? prefixMatch[0] : "";
@@ -353,21 +353,19 @@ function wrapTextByWordsWithPrefix(text, maxCharsPerLine = 60) {
 
     let currentLine = prefix;
     content.split(" ").forEach(word => {
-      // Check if adding the word exceeds max chars (prefix + existing text)
+      // Check if adding the word exceeds max chars
       if ((currentLine + word).length > maxCharsPerLine) {
-        wrapped.push(currentLine.trimEnd());  // push current line
-        currentLine = prefix + word + " ";    // start new line with prefix
+        wrapped.push(currentLine.trimEnd());
+        currentLine = prefix + word + " ";
       } else {
         currentLine += word + " ";
       }
     });
-
     if (currentLine.trim() !== "") wrapped.push(currentLine.trimEnd());
-  });
 
-      // Add a small extra line ONLY after numbered items (half-line spacing)
-    if (prefix && index < lines.length - 1) {
-      wrapped.push(""); // extra blank line after numbered item
+    // Add a small extra line ONLY after numbered items
+    if (/^\d+\.\s/.test(line) && index < lines.length - 1) {
+      wrapped.push(""); // this is your "half-line" gap
     }
   });
 
