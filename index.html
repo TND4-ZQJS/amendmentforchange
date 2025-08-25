@@ -266,13 +266,15 @@ function autoBindSave(el){
 }
   
 /* ---------- UNIVERSAL HELPER FUNCTION ---------- */
+
+  //Detect input type - text/dropdown/checkbox/radio
 function safeSetField(form, fieldName, value) {
   if (value === null || value === undefined) return;
 
   try {
     let field;
 
-    // text / trxtarea
+    // text or textarea, then force Uppercase
     try {
       field = form.getTextField(fieldName);
       field.setText(value.toUpperCase());
@@ -309,6 +311,55 @@ function safeSetField(form, fieldName, value) {
     console.error(`Error setting field ${fieldName}`, err);
   }
 }
+
+// Text-Area : WhatsApp-style auto numbering/bullets
+document.getElementById("Amendment_WriteDetails").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const start = this.selectionStart;
+    const text = this.value.substring(0, start);
+    const lastLine = text.split("\n").pop();
+
+    // detect numbering (1., 2., 3...)
+    const match = lastLine.match(/^(\d+)\.\s/);
+    if (match) {
+      const nextNum = parseInt(match[1]) + 1;
+      this.setRangeText("\n" + nextNum + ". ", start, start, "end");
+      return;
+    }
+
+    // detect dash (- )
+    if (/^-\s/.test(lastLine)) {
+      this.setRangeText("\n- ", start, start, "end");
+      return;
+    }
+
+    // default new line
+    this.setRangeText("\n", start, start, "end");
+  }
+});
+
+// Text-Area : Word wrap function for PDF export
+function wrapText(text, maxCharsPerLine = 60) {
+  const lines = text.split("\n");
+  const wrapped = lines.map(line => {
+    if (line.length <= maxCharsPerLine) return line;
+    const parts = [];
+    let current = "";
+    line.split(" ").forEach(word => {
+      if ((current + word).length > maxCharsPerLine) {
+        parts.push(current.trim());
+        current = word + " ";
+      } else {
+        current += word + " ";
+      }
+    });
+    if (current.trim().length > 0) parts.push(current.trim());
+    return parts.join("\n");
+  });
+  return wrapped.join("\n");
+}
+
   
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
 let sigTarget = null;
