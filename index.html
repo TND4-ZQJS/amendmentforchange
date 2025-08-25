@@ -32,29 +32,48 @@
   width: 100%;
 }
 
+/* Select box */
 .dropdown-with-button select {
   width: 100%;
-  padding: 10px 70px 10px 10px; /* leave space for the button */
-  border-radius: 10px;
+  padding: 10px 70px 10px 12px; /* leave space for button */
   border: 1px solid #ddd;
+  border-radius: 10px;          /* round corners */
   font-size: 1rem;
   appearance: none;
   background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.dropdown-with-button select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+/* Insert button */
 .dropdown-with-button button.insert {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  height: 100%,
-  padding: 0 12px;
-  border: none;
+  height: 100%;
+  padding: 0 14px;
+  border: 1px solid #ddd;
+  border-left: none;               /* merge with select */
+  border-radius: 0 10px 10px 0;    /* only right corners rounded */
   background: transparent;
   color: var(--accent);
   font-size: 0.95rem;
   cursor: pointer;
-  border-radius: 0 10px 10px 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.dropdown-with-button button.insert:hover {
+  background: rgba(0, 122, 255, 0.1);
+}
+
+.dropdown-with-button button.insert:active {
+  background: rgba(0, 122, 255, 0.2);
 }
 
   
