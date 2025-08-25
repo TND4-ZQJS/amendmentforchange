@@ -341,7 +341,7 @@ document.getElementById("Amendment_WriteDetails").addEventListener("keydown", fu
 });
 
 // 2.Word wrap function for PDF export
-function wrapText(text, maxCharsPerLine = 60) {
+function wrapText(text, maxCharsPerLine = 50) {
   const lines = text.split("\n");
   const wrapped = lines.map(line => {
     if (line.length <= maxCharsPerLine) return line;
@@ -527,7 +527,7 @@ async function fillPDF(){
     if (amendmentField) {
     amendmentField.enableMultiline(); // ✅ allow multiple lines in the PDF field
     const val = localStorage.getItem("Amendment_WriteDetails") || "";
-    amendmentField.setText(val,60);      // ✅ preserves \n from textarea
+    amendmentField.setText(val,50);      // ✅ preserves \n from textarea
     }
 
  
