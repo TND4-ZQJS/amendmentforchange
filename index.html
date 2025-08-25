@@ -341,30 +341,34 @@ document.getElementById("Amendment_WriteDetails").addEventListener("keydown", fu
 });
 
 // 2.Word wrap function for PDF export
-function wrapTextByWords(text, maxCharsPerLine = 50) {
+function wrapTextByWordsWithPrefix(text, maxCharsPerLine = 60) {
   const lines = text.split("\n");
-  const wrapped = [];
+  const wrapped = lines.map(line => {
+    // Detect prefix (numbering or dash)
+    const prefixMatch = line.match(/^(\d+\.\s|-\s)/);
+    const prefix = prefixMatch ? prefixMatch[0] : "";
+    const content = prefixMatch ? line.slice(prefix.length) : line;
 
-  for (let line of lines) {
-    let words = line.split(" ");
-    let currentLine = "";
+    if (content.length <= (maxCharsPerLine - prefix.length)) {
+      return line; // fits already
+    }
 
-    words.forEach(word => {
-      // If adding this word exceeds max length, push current line and start a new one
-      if ((currentLine + word).length > maxCharsPerLine) {
-        if (currentLine.trim() !== "") wrapped.push(currentLine.trim());
-        currentLine = word + " ";
+    const parts = [];
+    let current = "";
+    content.split(" ").forEach(word => {
+      if ((current + word).length > (maxCharsPerLine - prefix.length)) {
+        parts.push(prefix + current.trim());
+        current = word + " ";
       } else {
-        currentLine += word + " ";
+        current += word + " ";
       }
     });
-
-    if (currentLine.trim() !== "") wrapped.push(currentLine.trim());
-  }
-
+    if (current.trim().length > 0) parts.push(prefix + current.trim());
+    return parts.join("\n");
+  });
   return wrapped.join("\n");
 }
-
+  
   // 3. Text Area saving to local storage 
   document.getElementById("Amendment_WriteDetails").addEventListener("input", function() {
   const start = this.selectionStart;
@@ -375,7 +379,6 @@ function wrapTextByWords(text, maxCharsPerLine = 50) {
   localStorage.setItem("Amendment_WriteDetails", this.value);
   showSaveStatus();
 });
-
 
   
 /* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
@@ -531,8 +534,7 @@ async function fillPDF(){
     if (amendmentField) {
     amendmentField.enableMultiline(); // ✅ allow multiple lines in the PDF field
     const val = localStorage.getItem("Amendment_WriteDetails") || "";
-    amendmentField.setText(wrapTextByWords(val,50));      // ✅ preserves \n from textarea
-    }
+amendmentField.setText(wrapTextByWordsWithPrefix(val, 60));
 
  
 
