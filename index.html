@@ -50,41 +50,46 @@
   box-shadow: 0 0 0 2px rgba(0,122,255,0.2);
 }
 
-/* Insert button */
+/* Insert button as egg shape */
 .dropdown-with-button button.insert {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  height: 100%;
-  padding: 0 16px;
-  border: 1px solid #ddd;
-  border-left: 0;
-  border-radius: 0 10px 10px 0;
-  background-color: #f7f8fa; /* subtle light background like iOS */
+  top: 50%;
+  right: 10px;               /* some spacing from edge */
+  transform: translateY(-50%); /* vertically center */
+  height: 36px;              /* fixed height for egg shape */
+  padding: 0 16px;           /* horizontal padding */
+  border: none;              /* seamless */
+  border-radius: 50px;       /* fully rounded (egg shape) */
+  background-color: #fff;    /* same as select */
   color: var(--accent);
   font-size: 0.95rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
-  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
-  box-shadow: inset 0 -1px 0 #ccc; /* subtle inner shadow for depth */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12); /* subtle shadow */
+  transition: background 0.15s, transform 0.1s;
 }
 
-/* Hover effect */
 .dropdown-with-button button.insert:hover {
-  background-color: #e5f0ff;
-  border-color: var(--accent);
-  box-shadow: inset 0 -1px 0 #aaa;
+  background-color: #f5f6fa;
 }
 
-/* Active (pressed) effect */
 .dropdown-with-button button.insert:active {
-  background-color: #d0e4ff;
-  transform: translateY(1px);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  transform: translateY(-50%) scale(0.97);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Adjust select padding to avoid overlap with egg button */
+.dropdown-with-button select {
+  width: 100%;
+  padding: 10px 100px 10px 12px; /* make room for egg button */
+  border: 1px solid #ddd;
+  border-radius: 10px;          
+  font-size: 1rem;
+  appearance: none;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
   
   /* Policy grid (for "additional policies" dynamic demo to mirror reference behavior) */
