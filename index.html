@@ -35,7 +35,7 @@
 /* Select box */
 .dropdown-with-button select {
   width: 100%;
-  padding: 10px 70px 10px 12px; /* leave space for button */
+  padding: 10px 60px 10px 12px; /* leave space for button */
   border: 1px solid #ddd;
   border-radius: 10px;          /* round corners */
   font-size: 1rem;
@@ -58,22 +58,35 @@
   bottom: 0;
   height: 100%;
   padding: 0 14px;
-  border: 1px solid #ddd;
-  border-left: none;               /* merge with select */
-  border-radius: 0 10px 10px 0;    /* only right corners rounded */
-  background: transparent;
+  border: 1px solid #ddd;       /* full border */
+  border-left: none;             /* remove left border for seamless merge */
+  border-radius: 0 10px 10px 0;  /* only right corners rounded */
+  background: #fff;              /* match select background */
   color: var(--accent);
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
+/* Hover & Active for smooth visual feedback */
 .dropdown-with-button button.insert:hover {
   background: rgba(0, 122, 255, 0.1);
+  border-color: var(--accent);
 }
-
 .dropdown-with-button button.insert:active {
   background: rgba(0, 122, 255, 0.2);
+  border-color: var(--accent);
+}
+
+/* Optional: Add a subtle right-edge shadow for depth */
+.dropdown-with-button button.insert::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: #ddd;
 }
 
   
