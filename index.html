@@ -458,7 +458,15 @@ async function fillPDF(){
     const pages = pdfDoc.getPages();
     const page = pages[0]; // use first page
 
-    // ✅ FILL FORM FIELDS FROM LOCALSTORAGE HERE
+    // Amendment Details - Allow multiple lines in PDF field
+    const amendmentField = form.getTextField("Amendment_WriteDetails");
+    if (amendmentField) {
+    amendmentField.enableMultiline(); // ✅ allow multiple lines in the PDF field
+    const val = localStorage.getItem("Amendment_WriteDetails") || "";
+    amendmentField.setText(val);      // ✅ preserves \n from textarea
+    }
+
+    // FILL FORM FIELDS FROM LOCALSTORAGE HERE
    [
   "LifeProposed_Name",
   "PolicyNo",
@@ -543,7 +551,7 @@ if (sigWitness) {
   }
 }
 
-    //Flatten Signature
+    //Flatten PDF
     form.flatten();
 
     //Save + Download
